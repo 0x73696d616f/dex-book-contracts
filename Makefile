@@ -8,8 +8,7 @@ clean :;
 
 # Install dependencies
 install :;
-	@forge install foundry-rs/forge-std@master && \
-	forge install openzeppelin/openzeppelin-contracts@master
+	@forge install 
 
 # Update dependencies
 update :;
