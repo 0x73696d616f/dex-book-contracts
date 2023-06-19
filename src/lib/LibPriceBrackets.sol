@@ -51,9 +51,9 @@ library LibPriceBrackets {
         next_ == NULL ? self.highestPrice = price_ : self.priceBrackets[next_].prev = price_;
     }
 
-    function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_) internal {
+    function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, address asset_) internal {
         if (!exists(self, price_)) revert PriceBracketDoesNotExistError();
-        uint256 amount_ = self.priceBrackets[price_].orders.remove(orderId_);
+        uint256 amount_ = self.priceBrackets[price_].orders.remove(orderId_, asset_);
         uint256 accumulatedAmount_ = self.priceBrackets[price_].accumulatedAmount;
 
         // only remove the price bracket if there are no orders left
@@ -71,7 +71,7 @@ library LibPriceBrackets {
         delete self.priceBrackets[price_];
     }
 
-    function removeOrdersUntilTarget(PriceBrackets storage self, uint256 targetAmount_)
+    function removeOrdersUntilTarget(PriceBrackets storage self, uint256 targetAmount_, address asset_)
         internal
         returns (uint256, uint256)
     {
@@ -83,7 +83,7 @@ library LibPriceBrackets {
         uint256 currentAmount_ = self.priceBrackets[currentPrice_].accumulatedAmount;
         uint128 nextPrice_;
         while (accumulatedAmount_ + currentAmount_ <= targetAmount_ && currentPrice_ != NULL) {
-            self.priceBrackets[currentPrice_].orders.removeUntilTarget(targetAmount_ - accumulatedAmount_);
+            self.priceBrackets[currentPrice_].orders.removeUntilTarget(targetAmount_ - accumulatedAmount_, asset_);
             accumulatedAmount_ += currentAmount_;
             accumulatedCost_ += currentAmount_ * currentPrice_;
             nextPrice_ = self.priceBrackets[currentPrice_].next;
@@ -107,7 +107,7 @@ library LibPriceBrackets {
         // if the accumulated amount is smaller than the target amount, do a partial fulfillment of the target amount
         uint256 remainingAmount_ = targetAmount_ - accumulatedAmount_;
         self.priceBrackets[currentPrice_].accumulatedAmount -= remainingAmount_;
-        self.priceBrackets[currentPrice_].orders.removeUntilTarget(remainingAmount_);
+        self.priceBrackets[currentPrice_].orders.removeUntilTarget(remainingAmount_, asset_);
         return (targetAmount_, accumulatedCost_ + remainingAmount_ * currentPrice_);
     }
 

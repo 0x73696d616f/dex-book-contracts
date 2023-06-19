@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
+import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
+
 library LibLinkedOrders {
     uint48 internal constant NULL = uint48(0);
 
@@ -51,8 +53,8 @@ library LibLinkedOrders {
      * @param self is the linked list of orders
      * @param id_ is the id of the order to be removed
      */
-    function remove(LinkedOrders storage self, uint48 id_) internal returns (uint256) {
-        return remove(self, self.orders[id_].prev, id_, self.orders[id_].next);
+    function remove(LinkedOrders storage self, uint48 id_, address asset_) internal returns (uint256) {
+        return remove(self, self.orders[id_].prev, id_, self.orders[id_].next, asset_);
     }
 
     /**
@@ -61,7 +63,10 @@ library LibLinkedOrders {
      * @param id_ is the id of the order to be removed
      * @param nextId_ is the id of the order after the order to be removed
      */
-    function remove(LinkedOrders storage self, uint48 prevId_, uint48 id_, uint48 nextId_) internal returns (uint256) {
+    function remove(LinkedOrders storage self, uint48 prevId_, uint48 id_, uint48 nextId_, address asset_)
+        internal
+        returns (uint256)
+    {
         if (id_ == self.head) {
             self.head = nextId_;
         } else {
@@ -75,6 +80,7 @@ library LibLinkedOrders {
         }
 
         uint256 amount_ = self.orders[id_].amount;
+        ERC20(asset_).transfer(self.orders[id_].maker, amount_);
         delete self.orders[id_];
         return amount_;
     }
@@ -87,26 +93,45 @@ library LibLinkedOrders {
      * @param self is the linked list of orders
      * @param targetAmount_ is the cummulative amount to be removed
      */
-    function removeUntilTarget(LinkedOrders storage self, uint256 targetAmount_) internal returns (uint256) {
+    function removeUntilTarget(LinkedOrders storage self, uint256 targetAmount_, address asset_)
+        internal
+        returns (uint256)
+    {
         uint48 id_ = self.head;
         if (id_ == NULL) return 0; // no orders to remove
 
         uint256 amount_ = self.orders[id_].amount;
         uint256 accumulatedAmount_;
-        uint48 prevId_;
         uint48 nextId_;
-        while (id_ != NULL && accumulatedAmount_ + amount_ <= targetAmount_) {
+        while (accumulatedAmount_ + amount_ <= targetAmount_) {
             accumulatedAmount_ += amount_;
             nextId_ = self.orders[id_].next;
-            remove(self, id_, prevId_, nextId_);
-            prevId_ = id_;
+            ERC20(asset_).transfer(self.orders[id_].maker, amount_);
+            delete self.orders[id_];
             id_ = nextId_;
+            if (id_ == NULL) break;
             amount_ = self.orders[id_].amount;
         }
 
-        if (id_ == NULL || accumulatedAmount_ == targetAmount_) return accumulatedAmount_; // no orders left or reached target
+        // no orders left
+        if (id_ == NULL) {
+            delete self.head;
+            delete self.tail;
+            return accumulatedAmount_;
+        }
 
+        // any order was deleted, but not all, update head
+        if (accumulatedAmount_ != 0) {
+            self.head = id_;
+            self.orders[id_].prev = NULL;
+        }
+
+        // reached target
+        if (accumulatedAmount_ == targetAmount_) return accumulatedAmount_;
+
+        // partial fulfillment of the last order
         self.orders[id_].amount = amount_ - (targetAmount_ - accumulatedAmount_);
+        ERC20(asset_).transfer(self.orders[id_].maker, targetAmount_ - accumulatedAmount_);
         return targetAmount_;
     }
 }
