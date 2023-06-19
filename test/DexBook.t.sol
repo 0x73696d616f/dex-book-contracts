@@ -9,6 +9,6 @@ contract DexBookTest is Test {
     DexBook public dexBook;
 
     function setUp() external {
-        dexBook = new DexBook();
+        dexBook = new DexBook(address(0), address(0));
     }
 }
