@@ -34,6 +34,8 @@ library LibLinkedOrders {
         mapping(uint48 => Order) orders;
     }
 
+    error OrderDoesNotExistError();
+
     /**
      * @notice inserts an order at the bottom of a linked list of orders
      * @param self is the linked list of orders
@@ -54,19 +56,11 @@ library LibLinkedOrders {
      * @param id_ is the id of the order to be removed
      */
     function remove(LinkedOrders storage self, uint48 id_, address asset_) internal returns (uint256) {
-        return remove(self, self.orders[id_].prev, id_, self.orders[id_].next, asset_);
-    }
+        if (id_ == NULL) revert OrderDoesNotExistError();
 
-    /**
-     * @notice removes an order from a linked list of orders
-     * @param self is the linked list of orders
-     * @param id_ is the id of the order to be removed
-     * @param nextId_ is the id of the order after the order to be removed
-     */
-    function remove(LinkedOrders storage self, uint48 prevId_, uint48 id_, uint48 nextId_, address asset_)
-        internal
-        returns (uint256)
-    {
+        uint48 prevId_ = self.orders[id_].prev;
+        uint48 nextId_ = self.orders[id_].next;
+
         if (id_ == self.head) {
             self.head = nextId_;
         } else {
