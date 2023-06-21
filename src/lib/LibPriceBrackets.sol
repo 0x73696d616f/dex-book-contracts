@@ -139,7 +139,7 @@ library LibPriceBrackets {
             nextPrev_ = self.priceBrackets[prev_].next;
         }
 
-        if (price_ < prev_) revert PriceSmallerThanPrevError();
+        if (price_ <= prev_) revert PriceSmallerThanPrevError();
     }
 
     function _findClosestNext(PriceBrackets storage self, uint128[] calldata nexts_, uint128 price_)
@@ -167,6 +167,6 @@ library LibPriceBrackets {
             prevNext_ = self.priceBrackets[next_].prev;
         }
 
-        if (price_ > next_ && next_ != NULL) revert PriceBiggerThanNextError();
+        if (price_ >= next_ && next_ != NULL) revert PriceBiggerThanNextError();
     }
 }
