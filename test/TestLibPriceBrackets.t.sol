@@ -188,7 +188,44 @@ contract LibPriceBracketsTest is Test {
         assertEq(this.findClosestNext(nexts_, 110), 0);
     }
 
-    function test_LibPriceBrackets_RemoveOrdersUntilTarget() public { }
+    function test_LibPriceBrackets_RemoveOrdersUntilTarget() public {
+        uint128[] memory prevs_ = new uint128[](1);
+        uint128[] memory nexts_ = new uint128[](1);
+        prevs_[0] = 0;
+        nexts_[0] = 0;
+
+        this.insertOrder(100, firstMaker, 200, prevs_, nexts_);
+        this.insertOrder(100, secondMaker, 300, prevs_, nexts_);
+        this.insertOrder(50, thirdMaker, 400, prevs_, nexts_);
+        this.insertOrder(110, fourthMaker, 600, prevs_, nexts_);
+
+        linkedPriceBrackets.removeOrdersUntilTarget(700, address(token));
+
+        assertEq(linkedPriceBrackets.lowestPrice, 100);
+        assertEq(linkedPriceBrackets.highestPrice, 110);
+        assertEq(linkedPriceBrackets.priceBrackets[50].accumulatedAmount, 0);
+        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 200);
+
+        assertEq(linkedPriceBrackets.priceBrackets[100].linkedOrders.orders[1].maker, address(0));
+        assertEq(linkedPriceBrackets.priceBrackets[50].linkedOrders.orders[0].maker, address(0));
+        assertEq(linkedPriceBrackets.priceBrackets[100].linkedOrders.orders[2].maker, secondMaker);
+        assertEq(linkedPriceBrackets.priceBrackets[100].linkedOrders.orders[2].amount, 200);
+
+        linkedPriceBrackets.removeOrdersUntilTarget(200, address(token));
+
+        assertEq(linkedPriceBrackets.lowestPrice, 110);
+        assertEq(linkedPriceBrackets.highestPrice, 110);
+        assertEq(linkedPriceBrackets.priceBrackets[50].accumulatedAmount, 0);
+        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 0);
+
+        linkedPriceBrackets.removeOrdersUntilTarget(600, address(token));
+
+        assertEq(linkedPriceBrackets.lowestPrice, 0);
+        assertEq(linkedPriceBrackets.highestPrice, 0);
+        assertEq(linkedPriceBrackets.priceBrackets[50].accumulatedAmount, 0);
+        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 0);
+        assertEq(linkedPriceBrackets.priceBrackets[110].accumulatedAmount, 0);
+    }
 
     function insertOrder(
         uint128 price_,

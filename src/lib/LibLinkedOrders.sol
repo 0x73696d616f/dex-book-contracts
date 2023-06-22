@@ -128,4 +128,25 @@ library LibLinkedOrders {
         ERC20(asset_).transfer(self.orders[id_].maker, targetAmount_ - accumulatedAmount_);
         return targetAmount_;
     }
+
+    function getOrders(LinkedOrders storage self) public view returns (LibLinkedOrders.Order[] memory orders_) {
+        uint48 curr_ = self.head;
+        uint256 i_;
+        if (curr_ == 0) return new LibLinkedOrders.Order[](0);
+
+        orders_ = new LibLinkedOrders.Order[](self.length);
+        uint256 length_;
+        while (curr_ != 0) {
+            LibLinkedOrders.Order memory order_ = self.orders[curr_];
+            orders_[i_++] = order_;
+            curr_ = order_.next;
+            length_++;
+        }
+
+        LibLinkedOrders.Order[] memory correctOrders_ = new LibLinkedOrders.Order[](length_);
+        for (i_ = 0; i_ < length_; i_++) {
+            correctOrders_[i_] = orders_[i_];
+        }
+        orders_ = correctOrders_;
+    }
 }

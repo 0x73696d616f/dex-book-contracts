@@ -94,6 +94,7 @@ library LibPriceBrackets {
 
         // if the currentPrice_ is NULL, there are no more price brackets left
         if (currentPrice_ == NULL) {
+            delete self.lowestPrice;
             delete self.highestPrice;
             return (accumulatedAmount_, accumulatedCost_);
         }
@@ -168,5 +169,61 @@ library LibPriceBrackets {
         }
 
         if (price_ >= next_ && next_ != NULL) revert PriceBiggerThanNextError();
+    }
+
+    function getPrices(PriceBrackets storage self) internal view returns (uint128[] memory prices_) {
+        uint256 length_;
+        uint128 curr_ = self.lowestPrice;
+        if (curr_ == 0) return new uint128[](0);
+
+        prices_ = new uint128[](5000);
+        while (curr_ != 0) {
+            prices_[length_++] = curr_;
+            curr_ = self.priceBrackets[curr_].next;
+        }
+
+        uint128[] memory correctPrices_ = new uint128[](length_);
+        for (uint256 i_ = 0; i_ < length_; i_++) {
+            correctPrices_[i_] = prices_[i_];
+        }
+
+        return correctPrices_;
+    }
+
+    function getOrdersAtPrice(PriceBrackets storage self, uint128 price_)
+        internal
+        view
+        returns (LibLinkedOrders.Order[] memory)
+    {
+        return self.priceBrackets[price_].linkedOrders.getOrders();
+    }
+
+    function getOrdersAndPrices(PriceBrackets storage self)
+        internal
+        view
+        returns (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_)
+    {
+        uint256 i_;
+        uint256 length_;
+        uint128 curr_ = self.lowestPrice;
+        if (curr_ == 0) return (new LibLinkedOrders.Order[][](0), new uint128[](0));
+
+        orders_ = new LibLinkedOrders.Order[][](5000);
+        prices_ = new uint128[](5000);
+        while (curr_ != 0) {
+            LibLinkedOrders.Order[] memory priceOrders_ = getOrdersAtPrice(self, curr_);
+            orders_[i_++] = priceOrders_;
+            prices_[length_++] = curr_;
+            curr_ = self.priceBrackets[curr_].next;
+        }
+
+        LibLinkedOrders.Order[][] memory correctOrders_ = new LibLinkedOrders.Order[][](length_);
+        uint128[] memory correctPrices_ = new uint128[](length_);
+        for (i_ = 0; i_ < length_; i_++) {
+            correctOrders_[i_] = orders_[i_];
+            correctPrices_[i_] = prices_[i_];
+        }
+        orders_ = correctOrders_;
+        prices_ = correctPrices_;
     }
 }
