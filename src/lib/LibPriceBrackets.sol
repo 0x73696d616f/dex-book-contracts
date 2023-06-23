@@ -10,6 +10,12 @@ library LibPriceBrackets {
 
     uint128 internal constant NULL = uint128(0);
 
+    struct OrdersByPrice {
+        uint128 price;
+        uint256 accumulatedAmount;
+        LibLinkedOrders.Order[] orders;
+    }
+
     struct PriceBracket {
         uint128 prev;
         uint128 next;
@@ -211,29 +217,22 @@ library LibPriceBrackets {
     function getOrdersAndPrices(PriceBrackets storage self)
         internal
         view
-        returns (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_)
+        returns (OrdersByPrice[] memory correctOrdersByPrices_)
     {
-        uint256 i_;
         uint256 length_;
         uint128 curr_ = self.lowestPrice;
-        if (curr_ == 0) return (new LibLinkedOrders.Order[][](0), new uint128[](0));
+        if (curr_ == 0) return (new OrdersByPrice[](0));
 
-        orders_ = new LibLinkedOrders.Order[][](5000);
-        prices_ = new uint128[](5000);
+        OrdersByPrice[] memory ordersByPrices_ = new OrdersByPrice[](5000);
         while (curr_ != 0) {
             LibLinkedOrders.Order[] memory priceOrders_ = getOrdersAtPrice(self, curr_);
-            orders_[i_++] = priceOrders_;
-            prices_[length_++] = curr_;
+            ordersByPrices_[length_++] = OrdersByPrice(curr_, self.priceBrackets[curr_].accumulatedAmount, priceOrders_);
             curr_ = self.priceBrackets[curr_].next;
         }
 
-        LibLinkedOrders.Order[][] memory correctOrders_ = new LibLinkedOrders.Order[][](length_);
-        uint128[] memory correctPrices_ = new uint128[](length_);
-        for (i_ = 0; i_ < length_; i_++) {
-            correctOrders_[i_] = orders_[i_];
-            correctPrices_[i_] = prices_[i_];
+        correctOrdersByPrices_ = new OrdersByPrice[](length_);
+        for (curr_ = 0; curr_ < length_; curr_++) {
+            correctOrdersByPrices_[curr_] = ordersByPrices_[curr_];
         }
-        orders_ = correctOrders_;
-        prices_ = correctPrices_;
     }
 }

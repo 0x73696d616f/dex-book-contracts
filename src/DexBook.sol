@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import { console } from "forge-std/console.sol";
-
 import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
 
 import { LibLinkedOrders } from "./lib/LibLinkedOrders.sol";
@@ -168,19 +166,11 @@ contract DexBook {
         return _buyOrders.getOrderAtPrice(price_, orderId_);
     }
 
-    function sellOrdersAndPrices()
-        external
-        view
-        returns (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_)
-    {
-        (orders_, prices_) = _sellOrders.getOrdersAndPrices();
+    function sellOrdersAndPrices() external view returns (LibPriceBrackets.OrdersByPrice[] memory orders_) {
+        return _sellOrders.getOrdersAndPrices();
     }
 
-    function buyOrdersAndPrices()
-        external
-        view
-        returns (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_)
-    {
+    function buyOrdersAndPrices() external view returns (LibPriceBrackets.OrdersByPrice[] memory orders_) {
         return _buyOrders.getOrdersAndPrices();
     }
 

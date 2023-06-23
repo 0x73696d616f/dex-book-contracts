@@ -6,6 +6,7 @@ import { Test, console } from "@forge-std/Test.sol";
 import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
 
 import { LibLinkedOrders } from "src/lib/LibLinkedOrders.sol";
+import { LibPriceBrackets } from "src/lib/LibPriceBrackets.sol";
 import { DexBook } from "src/DexBook.sol";
 
 contract USDC is ERC20 {
@@ -69,17 +70,17 @@ contract DexBookTest is Test {
         assertEq(eth.balanceOf(address(dexBook)), ethAmount_);
         assertEq(eth.balanceOf(deployer), _feeAmount(ethAmount_));
 
-        (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_) = dexBook.sellOrdersAndPrices();
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.sellOrdersAndPrices();
 
         assertEq(usdcAmount_, 5e9);
-        assertEq(orders_[0].length, 1);
-        assertEq(orders_[0][0].maker, alice);
-        assertEq(orders_[0][0].amount, usdcAmount_);
-        assertEq(orders_[0][0].next, 0);
-        assertEq(orders_[0][0].prev, 0);
+        assertEq(ordersByPrice_.length, 1);
+        assertEq(ordersByPrice_[0].orders.length, 1);
+        assertEq(ordersByPrice_[0].orders[0].maker, alice);
+        assertEq(ordersByPrice_[0].orders[0].amount, usdcAmount_);
+        assertEq(ordersByPrice_[0].orders[0].next, 0);
+        assertEq(ordersByPrice_[0].orders[0].prev, 0);
 
-        assertEq(prices_.length, 1);
-        assertEq(prices_[0], tokenAtoTokenBPrice_);
+        assertEq(ordersByPrice_[0].price, tokenAtoTokenBPrice_);
 
         // Fill the order
 
@@ -124,16 +125,16 @@ contract DexBookTest is Test {
         assertEq(usdc.balanceOf(address(dexBook)), usdcAmount_);
         assertEq(usdc.balanceOf(deployer), _feeAmount(usdcAmount_));
 
-        (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_) = dexBook.buyOrdersAndPrices();
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.buyOrdersAndPrices();
 
-        assertEq(orders_[0].length, 1);
-        assertEq(orders_[0][0].maker, bob);
-        assertEq(orders_[0][0].amount, ethAmount_);
-        assertEq(orders_[0][0].next, 0);
-        assertEq(orders_[0][0].prev, 0);
+        assertEq(ordersByPrice_.length, 1);
+        assertEq(ordersByPrice_[0].orders.length, 1);
+        assertEq(ordersByPrice_[0].orders[0].maker, bob);
+        assertEq(ordersByPrice_[0].orders[0].amount, ethAmount_);
+        assertEq(ordersByPrice_[0].orders[0].next, 0);
+        assertEq(ordersByPrice_[0].orders[0].prev, 0);
 
-        assertEq(prices_.length, 1);
-        assertEq(prices_[0], tokenBtoTokenAPrice_);
+        assertEq(ordersByPrice_[0].price, tokenBtoTokenAPrice_);
 
         // Fill the order
 
@@ -184,9 +185,8 @@ contract DexBookTest is Test {
         assertEq(usdc.balanceOf(address(dexBook)), 0);
         assertApproxEq(usdc.balanceOf(deployer), _feeAmount(usdcAmount_));
 
-        (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_) = dexBook.sellOrdersAndPrices();
-        assertEq(orders_.length, 0);
-        assertEq(prices_.length, 0);
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.sellOrdersAndPrices();
+        assertEq(ordersByPrice_.length, 0);
 
         // insert again
 
@@ -217,7 +217,143 @@ contract DexBookTest is Test {
         assertApproxEq(usdc.balanceOf(makeAddr("1000_1e18")), _ethToUsdcNoPrecision(1e18, 1000));
         assertApproxEq(usdc.balanceOf(makeAddr("1200_6e18")), _ethToUsdcNoPrecision(6e18, 1200));
 
-        (orders_, prices_) = dexBook.sellOrdersAndPrices();
+        ordersByPrice_ = dexBook.sellOrdersAndPrices();
+
+        assertEq(ordersByPrice_.length, 1);
+
+        assertEq(ordersByPrice_[0].orders.length, 1);
+        assertEq(ordersByPrice_[0].price, 1200 * dexBook.pricePrecision());
+        assertEq(ordersByPrice_[0].orders[0].maker, makeAddr("1200_3e18"));
+        assertEq(ordersByPrice_[0].orders[0].amount, _ethToUsdc(3e18, 1200 * dexBook.pricePrecision()));
+    }
+
+    function test_placeSeveralBuyOrdersAndFulfillMarketSellOrder() public {
+        uint256 usdcAmount_ = _placeBuyLimitOrder(bob, 5e18, 1000);
+        usdcAmount_ += _placeBuyLimitOrder(bob, 4e18, 800);
+        usdcAmount_ += _placeBuyLimitOrder(bob, 6e18, 1200);
+        usdcAmount_ += _placeBuyLimitOrder(bob, 3e18, 1200);
+        usdcAmount_ += _placeBuyLimitOrder(bob, 2e18, 800);
+        usdcAmount_ += _placeBuyLimitOrder(bob, 1e18, 1000);
+
+        // Fill the orders
+
+        uint256 ethAmount_ = 5e18 + 4e18 + 6e18 + 3e18 + 2e18 + 1e18;
+        assertApproxEq(usdcAmount_, 21e9);
+        assertEq(ethAmount_, 21e18);
+        deal(address(eth), alice, _amountPlusFee(ethAmount_));
+        vm.startPrank(alice);
+        eth.approve(address(dexBook), _amountPlusFee(ethAmount_));
+        dexBook.placeSellMarketOrder(ethAmount_);
+        vm.stopPrank();
+
+        assertApproxEq(usdc.balanceOf(alice), usdcAmount_);
+        assertEq(usdc.balanceOf(address(dexBook)), 0);
+        assertApproxEq(usdc.balanceOf(deployer), _feeAmount(usdcAmount_));
+
+        assertApproxEq(eth.balanceOf(bob), ethAmount_);
+        assertEq(eth.balanceOf(address(dexBook)), 0);
+        assertApproxEq(eth.balanceOf(deployer), _feeAmount(ethAmount_));
+
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.buyOrdersAndPrices();
+        assertEq(ordersByPrice_.length, 0);
+
+        // insert again
+
+        uint256 partialUsdcAmount_ = _placeBuyLimitOrder(makeAddr("1000_5e18"), 5e18, 1000);
+        _placeBuyLimitOrder(makeAddr("800_4e18"), 4e18, 800);
+        partialUsdcAmount_ += _placeBuyLimitOrder(makeAddr("1200_6e18"), 6e18, 1200);
+        partialUsdcAmount_ += _placeBuyLimitOrder(makeAddr("1200_3e18"), 3e18, 1200);
+        partialUsdcAmount_ += _placeBuyLimitOrder(makeAddr("800_2e18"), 2e18, 800);
+        partialUsdcAmount_ += _placeBuyLimitOrder(makeAddr("1000_1e18"), 1e18, 1000);
+
+        // fill some orders
+
+        uint256 partialEthAmount_ = 3e18 + 2e18 + 5e18 + 1e18 + 6e18;
+        assertApproxEq(partialUsdcAmount_, 18e9);
+        deal(address(eth), alice, _amountPlusFee(partialEthAmount_));
+        vm.startPrank(alice);
+        eth.approve(address(dexBook), _amountPlusFee(partialEthAmount_));
+        dexBook.placeSellMarketOrder(partialEthAmount_);
+        vm.stopPrank();
+
+        assertApproxEq(usdc.balanceOf(alice), usdcAmount_ + partialUsdcAmount_);
+        assertApproxEq(usdc.balanceOf(address(dexBook)), usdcAmount_ - partialUsdcAmount_);
+        assertApproxEq(usdc.balanceOf(deployer), _feeAmount(usdcAmount_ + partialUsdcAmount_));
+
+        assertEq(eth.balanceOf(alice), 0);
+        assertEq(eth.balanceOf(address(dexBook)), 0);
+        assertApproxEq(eth.balanceOf(deployer), _feeAmount(ethAmount_ + partialEthAmount_));
+
+        assertApproxEq(eth.balanceOf(makeAddr("1200_6e18")), 6e18);
+        assertApproxEq(eth.balanceOf(makeAddr("1200_3e18")), 3e18);
+        assertApproxEq(eth.balanceOf(makeAddr("1000_5e18")), 5e18);
+        assertApproxEq(eth.balanceOf(makeAddr("1000_1e18")), 1e18);
+        assertApproxEq(eth.balanceOf(makeAddr("800_4e18")), 2e18);
+        assertEq(eth.balanceOf(makeAddr("800_2e18")), 0);
+
+        ordersByPrice_ = dexBook.buyOrdersAndPrices();
+
+        assertEq(ordersByPrice_.length, 1);
+
+        assertEq(ordersByPrice_.length, 1);
+        assertEq(ordersByPrice_[0].price, dexBook.invertPrice(800 * dexBook.pricePrecision()));
+        assertEq(ordersByPrice_[0].orders.length, 2);
+        assertEq(ordersByPrice_[0].orders[0].maker, makeAddr("800_4e18"));
+        assertEq(ordersByPrice_[0].orders[0].amount, 2e18);
+        assertEq(ordersByPrice_[0].orders[1].maker, makeAddr("800_2e18"));
+        assertEq(ordersByPrice_[0].orders[1].amount, 2e18);
+    }
+
+    function _placeBuyLimitOrder(address user_, uint256 ethAmount_, uint128 tokenAtoTokenBPrice_)
+        internal
+        returns (uint256)
+    {
+        tokenAtoTokenBPrice_ = tokenAtoTokenBPrice_ * dexBook.pricePrecision();
+        uint128 tokenBtoTokenAPrice_ = dexBook.invertPrice(tokenAtoTokenBPrice_);
+
+        uint256 initialDexBookUsdcBalance_ = usdc.balanceOf(address(dexBook));
+        uint256 initialDeployerUsdcBalance_ = usdc.balanceOf(deployer);
+        uint256 initialUserUsdcBalance_ = usdc.balanceOf(user_);
+
+        deal(
+            address(usdc), user_, initialUserUsdcBalance_ + _amountPlusFee(_ethToUsdc(ethAmount_, tokenAtoTokenBPrice_))
+        );
+
+        uint128[] memory prevsAndNexts_ = new uint128[](1);
+        prevsAndNexts_[0] = 0;
+
+        LibPriceBrackets.OrdersByPrice[] memory initialOrdersByPrice_ = dexBook.buyOrdersAndPrices();
+
+        vm.startPrank(user_);
+        usdc.approve(address(dexBook), _amountPlusFee(_ethToUsdc(ethAmount_, tokenAtoTokenBPrice_)));
+        uint48 orderId_ = dexBook.placeBuyLimitOrder(ethAmount_, tokenBtoTokenAPrice_, prevsAndNexts_, prevsAndNexts_);
+        vm.stopPrank();
+
+        assertApproxEq(
+            usdc.balanceOf(address(dexBook)), initialDexBookUsdcBalance_ + _ethToUsdc(ethAmount_, tokenAtoTokenBPrice_)
+        );
+        assertApproxEq(
+            usdc.balanceOf(deployer),
+            initialDeployerUsdcBalance_ + _feeAmount(_ethToUsdc(ethAmount_, tokenAtoTokenBPrice_))
+        );
+
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.buyOrdersAndPrices();
+
+        if (_isInArray(initialOrdersByPrice_, tokenBtoTokenAPrice_)) {
+            assertTrue(_compareArrays(initialOrdersByPrice_, ordersByPrice_));
+            assertTrue(_arePricesOrdered(ordersByPrice_));
+        } else {
+            assertTrue(_isInArray(ordersByPrice_, tokenBtoTokenAPrice_));
+            assertTrue(_arePricesOrdered(ordersByPrice_));
+            assertEq(ordersByPrice_.length, initialOrdersByPrice_.length + 1);
+        }
+
+        assertEq(dexBook.buyOrderAtPrice(tokenBtoTokenAPrice_, orderId_).maker, user_);
+        assertApproxEq(
+            dexBook.buyOrderAtPrice(tokenBtoTokenAPrice_, orderId_).amount, _ethToUsdc(ethAmount_, tokenAtoTokenBPrice_)
+        );
+
+        return _ethToUsdc(ethAmount_, tokenAtoTokenBPrice_);
     }
 
     function _placeSellLimitOrder(address user_, uint256 ethAmount_, uint128 tokenAtoTokenBPrice_)
@@ -233,7 +369,7 @@ contract DexBookTest is Test {
         uint128[] memory prevsAndNexts_ = new uint128[](1);
         prevsAndNexts_[0] = 0;
 
-        (LibLinkedOrders.Order[][] memory initOrders_, uint128[] memory initPrices_) = dexBook.sellOrdersAndPrices();
+        LibPriceBrackets.OrdersByPrice[] memory initialOrdersByPrice_ = dexBook.sellOrdersAndPrices();
 
         deal(address(eth), user_, initialUserEthBalance_ + _amountPlusFee(ethAmount_));
         vm.startPrank(user_);
@@ -246,15 +382,15 @@ contract DexBookTest is Test {
         assertApproxEq(eth.balanceOf(address(dexBook)), initialDexBookEthBalance_ + ethAmount_);
         assertApproxEq(eth.balanceOf(deployer), initialDeployerEthBalance_ + _feeAmount(ethAmount_));
 
-        (LibLinkedOrders.Order[][] memory orders_, uint128[] memory prices_) = dexBook.sellOrdersAndPrices();
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.sellOrdersAndPrices();
 
-        if (_isInArray(initPrices_, tokenAtoTokenBPrice_)) {
-            assertTrue(_compareArrays(initPrices_, prices_));
+        if (_isInArray(initialOrdersByPrice_, tokenAtoTokenBPrice_)) {
+            assertTrue(_compareArrays(initialOrdersByPrice_, ordersByPrice_));
+            assertTrue(_arePricesOrdered(ordersByPrice_));
         } else {
-            assertTrue(_isInArray(prices_, tokenAtoTokenBPrice_));
-            assertTrue(_arePricesOrdered(prices_));
-            assertEq(prices_.length, initPrices_.length + 1);
-            assertEq(orders_.length, initOrders_.length + 1);
+            assertTrue(_isInArray(ordersByPrice_, tokenAtoTokenBPrice_));
+            assertTrue(_arePricesOrdered(ordersByPrice_));
+            assertEq(ordersByPrice_.length, initialOrdersByPrice_.length + 1);
         }
 
         assertEq(dexBook.sellOrderAtPrice(tokenAtoTokenBPrice_, orderId_).maker, user_);
@@ -270,26 +406,29 @@ contract DexBookTest is Test {
         assertGt(a_, b_ * 999_999 / 1_000_000);
     }
 
-    function _arePricesOrdered(uint128[] memory prices_) internal pure returns (bool) {
+    function _arePricesOrdered(LibPriceBrackets.OrdersByPrice[] memory prices_) internal pure returns (bool) {
         for (uint256 i_ = 1; i_ < prices_.length; i_++) {
-            if (prices_[i_ - 1] >= prices_[i_]) {
+            if (prices_[i_ - 1].price >= prices_[i_].price) {
                 return false;
             }
         }
         return true;
     }
 
-    function _compareArrays(uint128[] memory array1_, uint128[] memory array2_) internal pure returns (bool) {
+    function _compareArrays(
+        LibPriceBrackets.OrdersByPrice[] memory array1_,
+        LibPriceBrackets.OrdersByPrice[] memory array2_
+    ) internal pure returns (bool) {
         if (array1_.length != array2_.length) return false;
         for (uint256 i = 0; i < array1_.length; i++) {
-            if (array1_[i] != array2_[i]) return false;
+            if (array1_[i].price != array2_[i].price) return false;
         }
         return true;
     }
 
-    function _isInArray(uint128[] memory array_, uint128 value_) internal pure returns (bool) {
+    function _isInArray(LibPriceBrackets.OrdersByPrice[] memory array_, uint128 value_) internal pure returns (bool) {
         for (uint256 i = 0; i < array_.length; i++) {
-            if (array_[i] == value_) {
+            if (array_[i].price == value_) {
                 return true;
             }
         }
