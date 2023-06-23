@@ -6,6 +6,8 @@ import { LibLinkedOrders } from "./LibLinkedOrders.sol";
 library LibPriceBrackets {
     using LibLinkedOrders for LibLinkedOrders.LinkedOrders;
 
+    uint128 internal constant PRICE_PRECISION = 10 ** 18;
+
     uint128 internal constant NULL = uint128(0);
 
     struct PriceBracket {
@@ -85,7 +87,7 @@ library LibPriceBrackets {
         while (accumulatedAmount_ + currentAmount_ <= targetAmount_ && currentPrice_ != NULL) {
             self.priceBrackets[currentPrice_].linkedOrders.removeUntilTarget(targetAmount_ - accumulatedAmount_, asset_);
             accumulatedAmount_ += currentAmount_;
-            accumulatedCost_ += currentAmount_ * currentPrice_;
+            accumulatedCost_ += currentAmount_ * PRICE_PRECISION ** 2 / currentPrice_;
             nextPrice_ = self.priceBrackets[currentPrice_].next;
             delete self.priceBrackets[currentPrice_];
             currentPrice_ = nextPrice_;
@@ -109,7 +111,7 @@ library LibPriceBrackets {
         uint256 remainingAmount_ = targetAmount_ - accumulatedAmount_;
         self.priceBrackets[currentPrice_].accumulatedAmount -= remainingAmount_;
         self.priceBrackets[currentPrice_].linkedOrders.removeUntilTarget(remainingAmount_, asset_);
-        return (targetAmount_, accumulatedCost_ + remainingAmount_ * currentPrice_);
+        return (targetAmount_, accumulatedCost_ + remainingAmount_ * PRICE_PRECISION ** 2 / currentPrice_);
     }
 
     function exists(PriceBrackets storage self, uint128 price_) internal view returns (bool) {
@@ -196,6 +198,14 @@ library LibPriceBrackets {
         returns (LibLinkedOrders.Order[] memory)
     {
         return self.priceBrackets[price_].linkedOrders.getOrders();
+    }
+
+    function getOrderAtPrice(PriceBrackets storage self, uint128 price_, uint48 orderId_)
+        internal
+        view
+        returns (LibLinkedOrders.Order memory)
+    {
+        return self.priceBrackets[price_].linkedOrders.orders[orderId_];
     }
 
     function getOrdersAndPrices(PriceBrackets storage self)
