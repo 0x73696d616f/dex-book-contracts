@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
-
 import { LibLinkedOrders } from "./lib/LibLinkedOrders.sol";
 import { LibPriceBrackets } from "./lib/LibPriceBrackets.sol";
 
@@ -176,5 +175,13 @@ contract DexBook {
 
     function invertPrice(uint128 price_) external pure returns (uint128) {
         return PRICE_PRECISION ** 2 / price_;
+    }
+
+    function amountPlusFee(uint256 amount_) external pure returns (uint256) {
+        return amount_ * (BASIS_POINT + _protocolFee) / BASIS_POINT;
+    }
+
+    function basisPoint() external pure returns (uint256) {
+        return BASIS_POINT;
     }
 }
