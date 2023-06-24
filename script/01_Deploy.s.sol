@@ -5,18 +5,22 @@ import { Script } from "@forge-std/Script.sol";
 
 import { DexBook } from "src/DexBook.sol";
 
-/// @dev See the "Solidity Scripting" section in the Foundry Book if this is your first time with Forge.
-/// https://book.getfoundry.sh/tutorials/solidity-scripting?highlight=scripts#solidity-scripting
+import { USDC } from "src/token/USDC.sol";
+import { WETH } from "src/token/WETH.sol";
+
 contract Deploy is Script {
-    function setUp() public {
-        // solhint-disable-previous-line no-empty-blocks
-    }
+    function setUp() public { }
 
-    /// @dev You can send multiple transactions inside a single script.
     function run() public {
-        vm.startBroadcast();
+        vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
 
-        // deploy contract
+        // deploy test tokens
+        USDC usdc = new USDC();
+        WETH weth = new WETH();
+
+        // deploy DexBook
+
+        new DexBook(address(weth), address(usdc));
 
         vm.stopBroadcast();
     }

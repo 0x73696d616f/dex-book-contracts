@@ -5,9 +5,12 @@
 **/bin
 broadcast/
 docs/
+**/cache_hardhat
+artifacts/
 
 # files
 *.env
 *.log
 .DS_Store
 lcov.info
+package-lock.json

@@ -129,7 +129,7 @@ library LibLinkedOrders {
         return targetAmount_;
     }
 
-    function getOrders(LinkedOrders storage self) public view returns (LibLinkedOrders.Order[] memory orders_) {
+    function getOrders(LinkedOrders storage self) internal view returns (LibLinkedOrders.Order[] memory orders_) {
         uint48 curr_ = self.head;
         uint256 i_;
         if (curr_ == 0) return new LibLinkedOrders.Order[](0);
