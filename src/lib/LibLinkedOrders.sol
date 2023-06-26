@@ -55,7 +55,7 @@ library LibLinkedOrders {
      * @param self is the linked list of orders
      * @param id_ is the id of the order to be removed
      */
-    function remove(LinkedOrders storage self, uint48 id_, address asset_) internal returns (uint256) {
+    function remove(LinkedOrders storage self, uint48 id_) internal returns (bool, address, uint256) {
         if (id_ == NULL) revert OrderDoesNotExistError();
 
         uint48 prevId_ = self.orders[id_].prev;
@@ -73,10 +73,24 @@ library LibLinkedOrders {
             self.orders[nextId_].prev = prevId_;
         }
 
+        address maker_ = self.orders[id_].maker;
         uint256 amount_ = self.orders[id_].amount;
-        ERC20(asset_).transfer(self.orders[id_].maker, amount_);
         delete self.orders[id_];
-        return amount_;
+
+        return (prevId_ == NULL && nextId_ == NULL, maker_, amount_);
+    }
+
+    /**
+     * @notice modifies the amount of an order
+     * @param self is the linked list of orders
+     * @param id_ is the id of the order to be modified
+     * @param newAmount_ is the new amount of the order
+     */
+    function modify(LinkedOrders storage self, uint48 id_, uint256 newAmount_) internal returns (address, uint256) {
+        if (id_ == NULL) revert OrderDoesNotExistError();
+        uint256 oldAmount_ = self.orders[id_].amount;
+        self.orders[id_].amount = newAmount_;
+        return (self.orders[id_].maker, oldAmount_);
     }
 
     /**
@@ -87,12 +101,14 @@ library LibLinkedOrders {
      * @param self is the linked list of orders
      * @param targetAmount_ is the cummulative amount to be removed
      */
-    function removeUntilTarget(LinkedOrders storage self, uint256 targetAmount_, address asset_)
-        internal
-        returns (uint256)
-    {
+    function removeUntilTarget(
+        LinkedOrders storage self,
+        uint256 targetAmount_,
+        uint128 price_,
+        function(uint48,uint128, address,uint256) internal _f
+    ) internal returns (uint256, bool) {
         uint48 id_ = self.head;
-        if (id_ == NULL) return 0; // no orders to remove
+        if (id_ == NULL) return (0, true); // no orders to remove
 
         uint256 amount_ = self.orders[id_].amount;
         uint256 accumulatedAmount_;
@@ -100,7 +116,7 @@ library LibLinkedOrders {
         while (accumulatedAmount_ + amount_ <= targetAmount_) {
             accumulatedAmount_ += amount_;
             nextId_ = self.orders[id_].next;
-            ERC20(asset_).transfer(self.orders[id_].maker, amount_);
+            _f(id_, price_, self.orders[id_].maker, amount_);
             delete self.orders[id_];
             id_ = nextId_;
             if (id_ == NULL) break;
@@ -111,7 +127,7 @@ library LibLinkedOrders {
         if (id_ == NULL) {
             delete self.head;
             delete self.tail;
-            return accumulatedAmount_;
+            return (accumulatedAmount_, true);
         }
 
         // any order was deleted, but not all, update head
@@ -121,12 +137,12 @@ library LibLinkedOrders {
         }
 
         // reached target
-        if (accumulatedAmount_ == targetAmount_) return accumulatedAmount_;
+        if (accumulatedAmount_ == targetAmount_) return (accumulatedAmount_, false);
 
         // partial fulfillment of the last order
         self.orders[id_].amount = amount_ - (targetAmount_ - accumulatedAmount_);
-        ERC20(asset_).transfer(self.orders[id_].maker, targetAmount_ - accumulatedAmount_);
-        return targetAmount_;
+        _f(id_, price_, self.orders[id_].maker, targetAmount_ - accumulatedAmount_);
+        return (targetAmount_, false);
     }
 
     function getOrders(LinkedOrders storage self) internal view returns (LibLinkedOrders.Order[] memory orders_) {

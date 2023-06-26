@@ -12,14 +12,12 @@ library LibPriceBrackets {
 
     struct OrdersByPrice {
         uint128 price;
-        uint256 accumulatedAmount;
         LibLinkedOrders.Order[] orders;
     }
 
     struct PriceBracket {
         uint128 prev;
         uint128 next;
-        uint256 accumulatedAmount;
         LibLinkedOrders.LinkedOrders linkedOrders;
     }
 
@@ -42,7 +40,6 @@ library LibPriceBrackets {
         uint128[] calldata nexts_
     ) internal returns (uint48 orderId_) {
         if (exists(self, price_)) {
-            self.priceBrackets[price_].accumulatedAmount += amount_;
             orderId_ = self.priceBrackets[price_].linkedOrders.insert(maker_, amount_);
             return orderId_;
         }
@@ -52,23 +49,21 @@ library LibPriceBrackets {
 
         self.priceBrackets[price_].prev = prev_;
         self.priceBrackets[price_].next = next_;
-        self.priceBrackets[price_].accumulatedAmount = amount_;
         orderId_ = self.priceBrackets[price_].linkedOrders.insert(maker_, amount_);
 
         prev_ == NULL ? self.lowestPrice = price_ : self.priceBrackets[prev_].next = price_;
         next_ == NULL ? self.highestPrice = price_ : self.priceBrackets[next_].prev = price_;
     }
 
-    function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, address asset_) internal {
+    function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_)
+        internal
+        returns (address, uint256)
+    {
         if (!exists(self, price_)) revert PriceBracketDoesNotExistError();
-        uint256 amount_ = self.priceBrackets[price_].linkedOrders.remove(orderId_, asset_);
-        uint256 accumulatedAmount_ = self.priceBrackets[price_].accumulatedAmount;
+        (bool isEmpty_, address maker_, uint256 amount_) = self.priceBrackets[price_].linkedOrders.remove(orderId_);
 
         // only remove the price bracket if there are no orders left
-        if (accumulatedAmount_ != amount_) {
-            self.priceBrackets[price_].accumulatedAmount = accumulatedAmount_ - amount_;
-            return;
-        }
+        if (!isEmpty_) return (maker_, amount_);
 
         uint128 prev_ = self.priceBrackets[price_].prev;
         uint128 next_ = self.priceBrackets[price_].next;
@@ -77,51 +72,52 @@ library LibPriceBrackets {
         next_ == NULL ? self.highestPrice = prev_ : self.priceBrackets[next_].prev = prev_;
 
         delete self.priceBrackets[price_];
+
+        return (maker_, amount_);
     }
 
-    function removeOrdersUntilTarget(PriceBrackets storage self, uint256 targetAmount_, address asset_)
+    function modifyOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, uint256 newAmount_)
         internal
-        returns (uint256, uint256)
+        returns (address, uint256)
     {
-        uint128 currentPrice_ = self.lowestPrice;
+        if (!exists(self, price_)) revert PriceBracketDoesNotExistError();
+        return self.priceBrackets[price_].linkedOrders.modify(orderId_, newAmount_);
+    }
+
+    function removeOrdersUntilTarget(
+        PriceBrackets storage self,
+        uint256 targetAmount_,
+        function(uint48,uint128,address,uint256) internal _f
+    ) internal returns (uint256 accumulatedAmount_, uint256 accumulatedCost_) {
+        uint128 initialLowestPrice_ = self.lowestPrice;
+        uint128 currentPrice_ = initialLowestPrice_;
         if (currentPrice_ == NULL) return (0, 0);
 
-        uint256 accumulatedAmount_;
-        uint256 accumulatedCost_;
-        uint256 currentAmount_ = self.priceBrackets[currentPrice_].accumulatedAmount;
+        uint256 currentAmount_;
         uint128 nextPrice_;
-        while (accumulatedAmount_ + currentAmount_ <= targetAmount_ && currentPrice_ != NULL) {
-            self.priceBrackets[currentPrice_].linkedOrders.removeUntilTarget(targetAmount_ - accumulatedAmount_, asset_);
+        bool isEmpty_;
+        while (accumulatedAmount_ < targetAmount_ && currentPrice_ != NULL) {
+            (currentAmount_, isEmpty_) = self.priceBrackets[currentPrice_].linkedOrders.removeUntilTarget(
+                targetAmount_ - accumulatedAmount_, currentPrice_, _f
+            );
             accumulatedAmount_ += currentAmount_;
             accumulatedCost_ += currentAmount_ * PRICE_PRECISION ** 2 / currentPrice_;
             nextPrice_ = self.priceBrackets[currentPrice_].next;
-            delete self.priceBrackets[currentPrice_];
-            currentPrice_ = nextPrice_;
-            currentAmount_ = self.priceBrackets[currentPrice_].accumulatedAmount;
+            if (isEmpty_) {
+                delete self.priceBrackets[currentPrice_];
+                currentPrice_ = nextPrice_;
+            }
         }
+
+        // only update lowest price if it changed
+        if (currentPrice_ != initialLowestPrice_) self.lowestPrice = currentPrice_;
 
         // if the currentPrice_ is NULL, there are no more price brackets left
-        if (currentPrice_ == NULL) {
-            delete self.lowestPrice;
-            delete self.highestPrice;
-            return (accumulatedAmount_, accumulatedCost_);
-        }
-
-        // update the lowest price if price brackets have been deleted
-        if (accumulatedAmount_ != 0) self.lowestPrice = currentPrice_;
-
-        // if the accumulated amount is equal to the target amount, return the accumulated cost
-        if (accumulatedAmount_ == targetAmount_) return (accumulatedAmount_, accumulatedCost_);
-
-        // if the accumulated amount is smaller than the target amount, do a partial fulfillment of the target amount
-        uint256 remainingAmount_ = targetAmount_ - accumulatedAmount_;
-        self.priceBrackets[currentPrice_].accumulatedAmount -= remainingAmount_;
-        self.priceBrackets[currentPrice_].linkedOrders.removeUntilTarget(remainingAmount_, asset_);
-        return (targetAmount_, accumulatedCost_ + remainingAmount_ * PRICE_PRECISION ** 2 / currentPrice_);
+        if (currentPrice_ == NULL) delete self.highestPrice;
     }
 
     function exists(PriceBrackets storage self, uint128 price_) internal view returns (bool) {
-        return self.priceBrackets[price_].accumulatedAmount != 0;
+        return self.priceBrackets[price_].linkedOrders.head != 0;
     }
 
     function _findClosestPrev(PriceBrackets storage self, uint128[] calldata prevs_, uint128 price_)
@@ -226,7 +222,7 @@ library LibPriceBrackets {
         OrdersByPrice[] memory ordersByPrices_ = new OrdersByPrice[](5000);
         while (curr_ != 0) {
             LibLinkedOrders.Order[] memory priceOrders_ = getOrdersAtPrice(self, curr_);
-            ordersByPrices_[length_++] = OrdersByPrice(curr_, self.priceBrackets[curr_].accumulatedAmount, priceOrders_);
+            ordersByPrices_[length_++] = OrdersByPrice(curr_, priceOrders_);
             curr_ = self.priceBrackets[curr_].next;
         }
 

@@ -31,25 +31,21 @@ contract LibPriceBracketsTest is Test {
         nexts_[0] = 0;
 
         this.insertOrder(100, firstMaker, 200, prevs_, nexts_);
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 200);
         assertEq(linkedPriceBrackets.lowestPrice, 100);
         assertEq(linkedPriceBrackets.highestPrice, 100);
 
         this.insertOrder(100, secondMaker, 300, prevs_, nexts_);
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 500);
         assertEq(linkedPriceBrackets.lowestPrice, 100);
         assertEq(linkedPriceBrackets.highestPrice, 100);
 
         nexts_[0] = 100;
         this.insertOrder(50, thirdMaker, 400, prevs_, nexts_);
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 500);
         assertEq(linkedPriceBrackets.lowestPrice, 50);
         assertEq(linkedPriceBrackets.highestPrice, 100);
 
         prevs_[0] = 100;
         nexts_[0] = 0;
         this.insertOrder(110, fourthMaker, 600, prevs_, nexts_);
-        assertEq(linkedPriceBrackets.priceBrackets[110].accumulatedAmount, 600);
         assertEq(linkedPriceBrackets.lowestPrice, 50);
         assertEq(linkedPriceBrackets.highestPrice, 110);
     }
@@ -65,30 +61,25 @@ contract LibPriceBracketsTest is Test {
         this.insertOrder(50, thirdMaker, 400, prevs_, nexts_);
         this.insertOrder(110, fourthMaker, 600, prevs_, nexts_);
 
-        linkedPriceBrackets.removeOrder(100, 1, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 300);
+        linkedPriceBrackets.removeOrder(100, 1);
         assertEq(linkedPriceBrackets.lowestPrice, 50);
         assertEq(linkedPriceBrackets.highestPrice, 110);
 
-        linkedPriceBrackets.removeOrder(100, 2, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 0);
+        linkedPriceBrackets.removeOrder(100, 2);
         assertEq(linkedPriceBrackets.lowestPrice, 50);
         assertEq(linkedPriceBrackets.highestPrice, 110);
 
-        linkedPriceBrackets.removeOrder(50, 1, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[50].accumulatedAmount, 0);
+        linkedPriceBrackets.removeOrder(50, 1);
         assertEq(linkedPriceBrackets.lowestPrice, 110);
         assertEq(linkedPriceBrackets.highestPrice, 110);
 
-        linkedPriceBrackets.removeOrder(110, 1, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[110].accumulatedAmount, 0);
+        linkedPriceBrackets.removeOrder(110, 1);
         assertEq(linkedPriceBrackets.lowestPrice, 0);
         assertEq(linkedPriceBrackets.highestPrice, 0);
 
         this.insertOrder(120, firstMaker, 200, prevs_, nexts_);
 
-        linkedPriceBrackets.removeOrder(120, 1, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[120].accumulatedAmount, 0);
+        linkedPriceBrackets.removeOrder(120, 1);
         assertEq(linkedPriceBrackets.lowestPrice, 0);
         assertEq(linkedPriceBrackets.highestPrice, 0);
 
@@ -96,18 +87,15 @@ contract LibPriceBracketsTest is Test {
         this.insertOrder(120, secondMaker, 300, prevs_, nexts_);
         this.insertOrder(120, thirdMaker, 400, prevs_, nexts_);
 
-        linkedPriceBrackets.removeOrder(120, 1, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[120].accumulatedAmount, 700);
+        linkedPriceBrackets.removeOrder(120, 1);
         assertEq(linkedPriceBrackets.lowestPrice, 120);
         assertEq(linkedPriceBrackets.highestPrice, 120);
 
-        linkedPriceBrackets.removeOrder(120, 2, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[120].accumulatedAmount, 400);
+        linkedPriceBrackets.removeOrder(120, 2);
         assertEq(linkedPriceBrackets.lowestPrice, 120);
         assertEq(linkedPriceBrackets.highestPrice, 120);
 
-        linkedPriceBrackets.removeOrder(120, 3, address(token));
-        assertEq(linkedPriceBrackets.priceBrackets[120].accumulatedAmount, 0);
+        linkedPriceBrackets.removeOrder(120, 3);
         assertEq(linkedPriceBrackets.lowestPrice, 0);
         assertEq(linkedPriceBrackets.highestPrice, 0);
     }
@@ -199,32 +187,25 @@ contract LibPriceBracketsTest is Test {
         this.insertOrder(50, thirdMaker, 400, prevs_, nexts_);
         this.insertOrder(110, fourthMaker, 600, prevs_, nexts_);
 
-        linkedPriceBrackets.removeOrdersUntilTarget(700, address(token));
+        linkedPriceBrackets.removeOrdersUntilTarget(700, _fulfillOrder);
 
         assertEq(linkedPriceBrackets.lowestPrice, 100);
         assertEq(linkedPriceBrackets.highestPrice, 110);
-        assertEq(linkedPriceBrackets.priceBrackets[50].accumulatedAmount, 0);
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 200);
 
         assertEq(linkedPriceBrackets.priceBrackets[100].linkedOrders.orders[1].maker, address(0));
         assertEq(linkedPriceBrackets.priceBrackets[50].linkedOrders.orders[0].maker, address(0));
         assertEq(linkedPriceBrackets.priceBrackets[100].linkedOrders.orders[2].maker, secondMaker);
         assertEq(linkedPriceBrackets.priceBrackets[100].linkedOrders.orders[2].amount, 200);
 
-        linkedPriceBrackets.removeOrdersUntilTarget(200, address(token));
+        linkedPriceBrackets.removeOrdersUntilTarget(200, _fulfillOrder);
 
         assertEq(linkedPriceBrackets.lowestPrice, 110);
         assertEq(linkedPriceBrackets.highestPrice, 110);
-        assertEq(linkedPriceBrackets.priceBrackets[50].accumulatedAmount, 0);
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 0);
 
-        linkedPriceBrackets.removeOrdersUntilTarget(600, address(token));
+        linkedPriceBrackets.removeOrdersUntilTarget(600, _fulfillOrder);
 
         assertEq(linkedPriceBrackets.lowestPrice, 0);
         assertEq(linkedPriceBrackets.highestPrice, 0);
-        assertEq(linkedPriceBrackets.priceBrackets[50].accumulatedAmount, 0);
-        assertEq(linkedPriceBrackets.priceBrackets[100].accumulatedAmount, 0);
-        assertEq(linkedPriceBrackets.priceBrackets[110].accumulatedAmount, 0);
     }
 
     function insertOrder(
@@ -245,5 +226,9 @@ contract LibPriceBracketsTest is Test {
 
     function findClosestNext(uint128[] calldata nexts_, uint128 price_) external view returns (uint128) {
         return linkedPriceBrackets._findClosestNext(nexts_, price_);
+    }
+
+    function _fulfillOrder(uint48, uint128, address maker_, uint256 amount_) internal {
+        token.transfer(maker_, amount_);
     }
 }

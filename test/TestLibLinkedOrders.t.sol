@@ -26,8 +26,7 @@ contract LibLinkedOrdersTest is Test {
 
     function test_LibLinkedOrders_InsertRemoveOrders() public {
         _insertOrders();
-        linkedOrders.remove(1, address(token));
-        assertEq(token.balanceOf(firstMaker), 1);
+        linkedOrders.remove(1);
 
         assertEq(linkedOrders.length, 5);
         assertEq(linkedOrders.head, 2);
@@ -55,8 +54,7 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[5].next, 0);
         assertEq(linkedOrders.orders[5].amount, 5);
 
-        linkedOrders.remove(4, address(token));
-        assertEq(token.balanceOf(fourthMaker), 4);
+        linkedOrders.remove(4);
 
         assertEq(linkedOrders.length, 5);
         assertEq(linkedOrders.head, 2);
@@ -79,8 +77,7 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[5].next, 0);
         assertEq(linkedOrders.orders[5].amount, 5);
 
-        linkedOrders.remove(5, address(token));
-        assertEq(token.balanceOf(fifthMaker), 5);
+        linkedOrders.remove(5);
 
         assertEq(linkedOrders.length, 5);
         assertEq(linkedOrders.head, 2);
@@ -101,8 +98,7 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[5].next, 0);
         assertEq(linkedOrders.orders[5].amount, 0);
 
-        linkedOrders.remove(2, address(token));
-        assertEq(token.balanceOf(secondMaker), 2);
+        linkedOrders.remove(2);
 
         assertEq(linkedOrders.length, 5);
         assertEq(linkedOrders.head, 3);
@@ -115,7 +111,7 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[3].next, 0);
         assertEq(linkedOrders.orders[3].amount, 3);
 
-        linkedOrders.remove(3, address(token));
+        linkedOrders.remove(3);
 
         assertEq(linkedOrders.length, 5);
         assertEq(linkedOrders.head, 0);
@@ -171,8 +167,7 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[8].next, 0);
         assertEq(linkedOrders.orders[8].amount, 3);
 
-        linkedOrders.remove(7, address(token));
-        assertEq(token.balanceOf(secondMaker), 4);
+        linkedOrders.remove(7);
 
         assertEq(linkedOrders.length, 8);
         assertEq(linkedOrders.head, 6);
@@ -190,8 +185,7 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[8].next, 0);
         assertEq(linkedOrders.orders[8].amount, 3);
 
-        linkedOrders.remove(6, address(token));
-        assertEq(token.balanceOf(firstMaker), 2);
+        linkedOrders.remove(6);
 
         assertEq(linkedOrders.length, 8);
         assertEq(linkedOrders.head, 8);
@@ -205,7 +199,7 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[8].next, 0);
         assertEq(linkedOrders.orders[8].amount, 3);
 
-        linkedOrders.remove(8, address(token));
+        linkedOrders.remove(8);
 
         assertEq(linkedOrders.length, 8);
         assertEq(linkedOrders.head, 0);
@@ -220,7 +214,7 @@ contract LibLinkedOrdersTest is Test {
         // test some orders deleted, then partial fulfillment of 4th //
 
         // 1 + 2 + 3 + 4 = 10
-        linkedOrders.removeUntilTarget(7, address(token));
+        linkedOrders.removeUntilTarget(7, 0, _fulfillOrder);
         assertEq(token.balanceOf(firstMaker), 1);
         assertEq(token.balanceOf(secondMaker), 2);
         assertEq(token.balanceOf(thirdMaker), 3);
@@ -248,7 +242,7 @@ contract LibLinkedOrdersTest is Test {
 
         // test no orders deleted, partial fulfillment //
 
-        linkedOrders.removeUntilTarget(1, address(token));
+        linkedOrders.removeUntilTarget(1, 0, _fulfillOrder);
         assertEq(token.balanceOf(firstMaker), 1);
         assertEq(token.balanceOf(secondMaker), 2);
         assertEq(token.balanceOf(thirdMaker), 3);
@@ -272,7 +266,9 @@ contract LibLinkedOrdersTest is Test {
 
         // test all orders deleted
 
-        assertEq(linkedOrders.removeUntilTarget(10, address(token)), 7);
+        (uint256 amount_, bool isEmpty_) = linkedOrders.removeUntilTarget(10, 0, _fulfillOrder);
+        assertEq(amount_, 7);
+        assertTrue(isEmpty_);
         assertEq(token.balanceOf(firstMaker), 1);
         assertEq(token.balanceOf(secondMaker), 2);
         assertEq(token.balanceOf(thirdMaker), 3);
@@ -330,5 +326,9 @@ contract LibLinkedOrdersTest is Test {
         assertEq(linkedOrders.orders[orderId_].prev, 0);
         assertEq(linkedOrders.orders[orderId_].next, 0);
         assertEq(linkedOrders.orders[orderId_].amount, 0);
+    }
+
+    function _fulfillOrder(uint48, uint128, address maker_, uint256 amount_) internal {
+        token.transfer(maker_, amount_);
     }
 }

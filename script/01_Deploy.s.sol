@@ -16,11 +16,11 @@ contract Deploy is Script {
     function setUp() public { }
 
     function run() public {
-        vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
-        //vm.startBroadcast();
+        //vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+        vm.startBroadcast();
 
         (USDC usdc_, WETH weth_, DexBook dexBook_) = _deploy();
-        //_insertOrder(usdc_, dexBook_);
+        _insertOrders(usdc_, dexBook_);
 
         vm.stopBroadcast();
     }
