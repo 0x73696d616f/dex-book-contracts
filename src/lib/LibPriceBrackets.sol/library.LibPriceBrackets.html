@@ -149,7 +149,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="libpricebrackets"><a class="header" href="#libpricebrackets">LibPriceBrackets</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/e1f5062c751c1ce61c94e98aba2c7bd547a8b076/src/lib/LibPriceBrackets.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/lib/LibPriceBrackets.sol">Git Source</a></p>
 <h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
 <h3 id="price_precision"><a class="header" href="#price_precision">PRICE_PRECISION</a></h3>
 <pre><code class="language-solidity">uint128 internal constant PRICE_PRECISION = 10 ** 18;
@@ -169,12 +169,19 @@
 ) internal returns (uint48 orderId_);
 </code></pre>
 <h3 id="removeorder"><a class="header" href="#removeorder">removeOrder</a></h3>
-<pre><code class="language-solidity">function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, address asset_) internal;
+<pre><code class="language-solidity">function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_) internal returns (address, uint256);
+</code></pre>
+<h3 id="modifyorder"><a class="header" href="#modifyorder">modifyOrder</a></h3>
+<pre><code class="language-solidity">function modifyOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, uint256 newAmount_)
+    internal
+    returns (address, uint256);
 </code></pre>
 <h3 id="removeordersuntiltarget"><a class="header" href="#removeordersuntiltarget">removeOrdersUntilTarget</a></h3>
-<pre><code class="language-solidity">function removeOrdersUntilTarget(PriceBrackets storage self, uint256 targetAmount_, address asset_)
-    internal
-    returns (uint256, uint256);
+<pre><code class="language-solidity">function removeOrdersUntilTarget(
+    PriceBrackets storage self,
+    uint256 targetAmount_,
+    function(uint48,uint128,address,uint256) internal _f
+) internal returns (uint256 accumulatedAmount_, uint256 accumulatedCost_);
 </code></pre>
 <h3 id="exists"><a class="header" href="#exists">exists</a></h3>
 <pre><code class="language-solidity">function exists(PriceBrackets storage self, uint128 price_) internal view returns (bool);
@@ -226,7 +233,6 @@
 <h3 id="ordersbyprice"><a class="header" href="#ordersbyprice">OrdersByPrice</a></h3>
 <pre><code class="language-solidity">struct OrdersByPrice {
     uint128 price;
-    uint256 accumulatedAmount;
     LibLinkedOrders.Order[] orders;
 }
 </code></pre>
@@ -234,7 +240,6 @@
 <pre><code class="language-solidity">struct PriceBracket {
     uint128 prev;
     uint128 next;
-    uint256 accumulatedAmount;
     LibLinkedOrders.LinkedOrders linkedOrders;
 }
 </code></pre>
