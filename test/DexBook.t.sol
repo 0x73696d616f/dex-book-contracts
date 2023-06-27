@@ -304,6 +304,57 @@ contract DexBookTest is Test {
         assertEq(ordersByPrice_[0].orders[1].amount, 2e18);
     }
 
+    function test_placeAndRemoveBuyLimitOrder() public {
+        _placeBuyLimitOrder(bob, 5e18, 1000);
+        _placeBuyLimitOrder(bob, 4e18, 800);
+        _placeBuyLimitOrder(bob, 6e18, 1200);
+        _placeBuyLimitOrder(bob, 6e18, 1200);
+        _placeBuyLimitOrder(bob, 2e18, 1200);
+
+        _removeBuyLimitOrder(bob, 1000, 1);
+        _removeBuyLimitOrder(bob, 800, 1);
+        _removeBuyLimitOrder(bob, 1200, 2);
+        _removeBuyLimitOrder(bob, 1200, 3);
+        _removeBuyLimitOrder(bob, 1200, 1);
+    }
+
+    function test_placeAndRemoveSellLimitOrder() public {
+        _placeSellLimitOrder(bob, 5e18, 1000);
+        _placeSellLimitOrder(bob, 4e18, 800);
+        _placeSellLimitOrder(bob, 6e18, 1200);
+        _placeSellLimitOrder(bob, 6e18, 1200);
+        _placeSellLimitOrder(bob, 2e18, 1200);
+
+        _removeSellLimitOrder(bob, 1000, 1);
+        _removeSellLimitOrder(bob, 800, 1);
+        _removeSellLimitOrder(bob, 1200, 2);
+        _removeSellLimitOrder(bob, 1200, 3);
+        _removeSellLimitOrder(bob, 1200, 1);
+    }
+
+    function test_placeAndModifyBuyLimitOrders() public {
+        _placeBuyLimitOrder(bob, 5e18, 1000);
+        _increaseBuyLimitOrderAmountAndIncreasePrice(bob, 1, 1000, 100, 1e18);
+        _increaseBuyLimitOrderAmountAndIncreasePrice(bob, 1, 1100, 0, 1e18);
+        _increaseBuyLimitOrderAmountAndDecreasePrice(bob, 1, 1100, 100, 0);
+        _increaseBuyLimitOrderAmountAndDecreasePrice(bob, 1, 1000, 100, 2e18);
+        _decreaseBuyLimitOrderAmountAndIncreasePrice(bob, 1, 900, 100, 0);
+        _decreaseBuyLimitOrderAmountAndIncreasePrice(bob, 1, 1000, 100, 1e18);
+        _decreaseBuyLimitOrderAmountAndDecreasePrice(bob, 1, 1100, 100, 1e18);
+    }
+
+    function test_placeAndModifySellLimitOrders() public {
+        _placeSellLimitOrder(bob, 5e18, 1000);
+        _increaseSellLimitOrderAmountAndIncreasePrice(bob, 1, 1000, 100, 1e18);
+        _increaseSellLimitOrderAmountAndIncreasePrice(bob, 1, 1100, 0, 1e18);
+        _increaseSellLimitOrderAmountAndDecreasePrice(bob, 1, 1100, 100, 0);
+        _increaseSellLimitOrderAmountAndDecreasePrice(bob, 1, 1000, 100, 2e18);
+        _decreaseSellLimitOrderAmountAndIncreasePrice(bob, 1, 900, 100, 0);
+        _decreaseSellLimitOrderAmountAndIncreasePrice(bob, 1, 1000, 100, 1e18);
+        _decreaseSellLimitOrderAmountAndDecreasePrice(bob, 1, 1100, 100, 1e18);
+        _decreaseSellLimitOrderAmountAndDecreasePrice(bob, 1, 1000, 100, 0);
+    }
+
     function _placeBuyLimitOrder(address user_, uint256 ethAmount_, uint128 tokenAtoTokenBPrice_)
         internal
         returns (uint256)
@@ -402,7 +453,285 @@ contract DexBookTest is Test {
         return _ethToUsdc(ethAmount_, tokenAtoTokenBPrice_);
     }
 
+    function _removeBuyLimitOrder(address user_, uint128 price_, uint48 orderId_) internal {
+        price_ = dexBook.pricePrecision() / price_;
+        uint256 initialDexBookUsdcBalance_ = usdc.balanceOf(address(dexBook));
+        uint256 initialUserUsdcBalance_ = usdc.balanceOf(user_);
+
+        LibPriceBrackets.OrdersByPrice[] memory initialOrdersByPrice_ = dexBook.buyOrdersAndPrices();
+
+        uint256 ethAmount_ = dexBook.buyOrderAtPrice(price_, orderId_).amount;
+        uint256 usdcAmount_ = _ethToUsdc(ethAmount_, dexBook.pricePrecision() ** 2 / price_);
+
+        vm.prank(user_);
+        dexBook.removeBuyLimitOrder(orderId_, price_);
+
+        assertApproxEq(usdc.balanceOf(address(dexBook)), initialDexBookUsdcBalance_ - usdcAmount_);
+        assertApproxEq(usdc.balanceOf(user_), initialUserUsdcBalance_ + usdcAmount_);
+
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.buyOrdersAndPrices();
+
+        assertTrue(_arePricesOrdered(initialOrdersByPrice_));
+        assertTrue(_arePricesOrdered(ordersByPrice_));
+
+        if (_isInArray(initialOrdersByPrice_, price_) && _isInArray(ordersByPrice_, price_)) {
+            assertTrue(_compareArrays(initialOrdersByPrice_, ordersByPrice_));
+        } else {
+            assertEq(initialOrdersByPrice_.length, ordersByPrice_.length + 1);
+            assertTrue(_isInArray(initialOrdersByPrice_, price_));
+            assertFalse(_isInArray(ordersByPrice_, price_));
+        }
+    }
+
+    function _removeSellLimitOrder(address user_, uint128 price_, uint48 orderId_) internal {
+        price_ = price_ * dexBook.pricePrecision();
+        uint256 initialDexBookEthBalance_ = eth.balanceOf(address(dexBook));
+        uint256 initialUserEthBalance_ = eth.balanceOf(user_);
+
+        LibPriceBrackets.OrdersByPrice[] memory initialOrdersByPrice_ = dexBook.sellOrdersAndPrices();
+
+        uint256 usdcAmount_ = dexBook.sellOrderAtPrice(price_, orderId_).amount;
+        uint256 ethAmount_ = _usdcToEth(usdcAmount_, price_);
+
+        vm.prank(user_);
+        dexBook.removeSellLimitOrder(orderId_, price_);
+
+        assertApproxEq(eth.balanceOf(address(dexBook)), initialDexBookEthBalance_ - ethAmount_);
+        assertApproxEq(eth.balanceOf(user_), initialUserEthBalance_ + ethAmount_);
+
+        LibPriceBrackets.OrdersByPrice[] memory ordersByPrice_ = dexBook.sellOrdersAndPrices();
+
+        assertTrue(_arePricesOrdered(initialOrdersByPrice_));
+        assertTrue(_arePricesOrdered(ordersByPrice_));
+
+        if (_isInArray(initialOrdersByPrice_, price_) && _isInArray(ordersByPrice_, price_)) {
+            assertTrue(_compareArrays(initialOrdersByPrice_, ordersByPrice_));
+        } else {
+            assertEq(initialOrdersByPrice_.length, ordersByPrice_.length + 1);
+            assertTrue(_isInArray(initialOrdersByPrice_, price_));
+            assertFalse(_isInArray(ordersByPrice_, price_));
+        }
+    }
+
+    function _increaseBuyLimitOrderAmountAndIncreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceIncrease_,
+        uint256 ethIncrease_
+    ) internal {
+        uint128 newPrice_ = dexBook.pricePrecision() / (price_ + priceIncrease_);
+        price_ = dexBook.pricePrecision() / price_;
+        uint256 ethAmount_ = dexBook.buyOrderAtPrice(price_, orderId_).amount;
+        uint256 usdcAmount_ = _ethToUsdc(ethAmount_, dexBook.pricePrecision() ** 2 / price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ + ethIncrease_, dexBook.pricePrecision() ** 2 / newPrice_);
+        _modifyAndAssertBuyLimitOrder(
+            user_, orderId_, usdcAmount_, newUsdcAmount_, price_, newPrice_, ethAmount_ + ethIncrease_
+        );
+    }
+
+    function _increaseBuyLimitOrderAmountAndDecreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceDecrease_,
+        uint256 ethIncrease_
+    ) internal {
+        uint128 newPrice_ = dexBook.pricePrecision() / (price_ - priceDecrease_);
+        price_ = dexBook.pricePrecision() / price_;
+        uint256 ethAmount_ = dexBook.buyOrderAtPrice(price_, orderId_).amount;
+        uint256 usdcAmount_ = _ethToUsdc(ethAmount_, dexBook.pricePrecision() ** 2 / price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ + ethIncrease_, dexBook.pricePrecision() ** 2 / newPrice_);
+        _modifyAndAssertBuyLimitOrder(
+            user_, orderId_, usdcAmount_, newUsdcAmount_, price_, newPrice_, ethAmount_ + ethIncrease_
+        );
+    }
+
+    function _decreaseBuyLimitOrderAmountAndIncreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceIncrease_,
+        uint256 ethDecrease_
+    ) internal {
+        uint128 newPrice_ = dexBook.pricePrecision() / (price_ + priceIncrease_);
+        price_ = dexBook.pricePrecision() / price_;
+        uint256 ethAmount_ = dexBook.buyOrderAtPrice(price_, orderId_).amount;
+        uint256 usdcAmount_ = _ethToUsdc(ethAmount_, dexBook.pricePrecision() ** 2 / price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ - ethDecrease_, dexBook.pricePrecision() ** 2 / newPrice_);
+        _modifyAndAssertBuyLimitOrder(
+            user_, orderId_, usdcAmount_, newUsdcAmount_, price_, newPrice_, ethAmount_ - ethDecrease_
+        );
+    }
+
+    function _decreaseBuyLimitOrderAmountAndDecreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceDecrease_,
+        uint256 ethDecrease_
+    ) internal {
+        uint128 newPrice_ = dexBook.pricePrecision() / (price_ - priceDecrease_);
+        price_ = dexBook.pricePrecision() / price_;
+        uint256 ethAmount_ = dexBook.buyOrderAtPrice(price_, orderId_).amount;
+        uint256 usdcAmount_ = _ethToUsdc(ethAmount_, dexBook.pricePrecision() ** 2 / price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ - ethDecrease_, dexBook.pricePrecision() ** 2 / newPrice_);
+        _modifyAndAssertBuyLimitOrder(
+            user_, orderId_, usdcAmount_, newUsdcAmount_, price_, newPrice_, ethAmount_ - ethDecrease_
+        );
+    }
+
+    function _modifyAndAssertBuyLimitOrder(
+        address user_,
+        uint48 orderId_,
+        uint256 usdcAmount_,
+        uint256 newUsdcAmount_,
+        uint128 price_,
+        uint128 newPrice_,
+        uint256 newEthAmount_
+    ) internal {
+        uint256 initialDexBookUsdcBalance_ = usdc.balanceOf(address(dexBook));
+        uint256 initialUserUsdcBalance_ = usdc.balanceOf(user_);
+
+        if (newUsdcAmount_ > usdcAmount_) {
+            uint256 usdcIncrease_ = newUsdcAmount_ - usdcAmount_;
+            initialUserUsdcBalance_ += usdcIncrease_;
+            deal(address(usdc), user_, initialUserUsdcBalance_);
+            vm.startPrank(user_);
+            usdc.approve(address(dexBook), newUsdcAmount_ - usdcAmount_);
+            uint48 newOrderId_ = dexBook.modifyBuyLimitOrder(
+                orderId_, price_, newPrice_, newEthAmount_, new uint128[](1), new uint128[](1)
+            );
+            vm.stopPrank();
+
+            assertApproxEq(usdc.balanceOf(address(dexBook)), initialDexBookUsdcBalance_ + usdcIncrease_);
+            assertApproxEq(usdc.balanceOf(user_), initialUserUsdcBalance_ - usdcIncrease_);
+
+            if (price_ != newPrice_) assertEq(dexBook.buyOrderAtPrice(price_, orderId_).amount, 0);
+            assertApproxEq(dexBook.buyOrderAtPrice(newPrice_, newOrderId_).amount, newEthAmount_);
+        } else {
+            uint256 usdcDecrease_ = usdcAmount_ - newUsdcAmount_;
+            vm.prank(user_);
+            uint48 newOrderId_ = dexBook.modifyBuyLimitOrder(
+                orderId_, price_, newPrice_, newEthAmount_, new uint128[](1), new uint128[](1)
+            );
+
+            assertApproxEq(usdc.balanceOf(address(dexBook)), initialDexBookUsdcBalance_ - usdcDecrease_);
+            assertApproxEq(usdc.balanceOf(user_), initialUserUsdcBalance_ + usdcDecrease_);
+
+            if (price_ != newPrice_) assertEq(dexBook.buyOrderAtPrice(price_, orderId_).amount, 0);
+            assertApproxEq(dexBook.buyOrderAtPrice(newPrice_, newOrderId_).amount, newEthAmount_);
+        }
+    }
+
+    function _increaseSellLimitOrderAmountAndIncreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceIncrease_,
+        uint256 ethIncrease_
+    ) internal {
+        uint128 newPrice_ = (price_ + priceIncrease_) * dexBook.pricePrecision();
+        price_ = price_ * dexBook.pricePrecision();
+        uint256 usdcAmount_ = dexBook.sellOrderAtPrice(price_, orderId_).amount;
+        uint256 ethAmount_ = _usdcToEth(usdcAmount_, price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ + ethIncrease_, newPrice_);
+        uint256 newEthAmount_ = _usdcToEth(newUsdcAmount_, newPrice_);
+        _modifyAndAssertSellLimitOrder(user_, orderId_, ethAmount_, newEthAmount_, price_, newPrice_, newUsdcAmount_);
+    }
+
+    function _increaseSellLimitOrderAmountAndDecreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceDecrease_,
+        uint256 ethIncrease_
+    ) internal {
+        uint128 newPrice_ = (price_ - priceDecrease_) * dexBook.pricePrecision();
+        price_ = price_ * dexBook.pricePrecision();
+        uint256 usdcAmount_ = dexBook.sellOrderAtPrice(price_, orderId_).amount;
+        uint256 ethAmount_ = _usdcToEth(usdcAmount_, price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ + ethIncrease_, newPrice_);
+        uint256 newEthAmount_ = _usdcToEth(newUsdcAmount_, newPrice_);
+        _modifyAndAssertSellLimitOrder(user_, orderId_, ethAmount_, newEthAmount_, price_, newPrice_, newUsdcAmount_);
+    }
+
+    function _decreaseSellLimitOrderAmountAndIncreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceIncrease_,
+        uint256 ethDecrease
+    ) internal {
+        uint128 newPrice_ = (price_ + priceIncrease_) * dexBook.pricePrecision();
+        price_ = price_ * dexBook.pricePrecision();
+        uint256 usdcAmount_ = dexBook.sellOrderAtPrice(price_, orderId_).amount;
+        uint256 ethAmount_ = _usdcToEth(usdcAmount_, price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ - ethDecrease, newPrice_);
+        uint256 newEthAmount_ = _usdcToEth(newUsdcAmount_, newPrice_);
+        _modifyAndAssertSellLimitOrder(user_, orderId_, ethAmount_, newEthAmount_, price_, newPrice_, newUsdcAmount_);
+    }
+
+    function _decreaseSellLimitOrderAmountAndDecreasePrice(
+        address user_,
+        uint48 orderId_,
+        uint128 price_,
+        uint128 priceDecrease_,
+        uint256 ethDecrease
+    ) internal {
+        uint128 newPrice_ = (price_ - priceDecrease_) * dexBook.pricePrecision();
+        price_ = price_ * dexBook.pricePrecision();
+        uint256 usdcAmount_ = dexBook.sellOrderAtPrice(price_, orderId_).amount;
+        uint256 ethAmount_ = _usdcToEth(usdcAmount_, price_);
+        uint256 newUsdcAmount_ = _ethToUsdc(ethAmount_ - ethDecrease, newPrice_);
+        uint256 newEthAmount_ = _usdcToEth(newUsdcAmount_, newPrice_);
+        _modifyAndAssertSellLimitOrder(user_, orderId_, ethAmount_, newEthAmount_, price_, newPrice_, newUsdcAmount_);
+    }
+
+    function _modifyAndAssertSellLimitOrder(
+        address user_,
+        uint48 orderId_,
+        uint256 ethAmount_,
+        uint256 newEthAmount_,
+        uint128 price_,
+        uint128 newPrice_,
+        uint256 newUsdcAmount_
+    ) internal {
+        uint256 initialDexBookEthBalance_ = eth.balanceOf(address(dexBook));
+        uint256 initialUserEthBalance_ = eth.balanceOf(user_);
+
+        if (newEthAmount_ > ethAmount_) {
+            initialUserEthBalance_ += newEthAmount_ - ethAmount_;
+            deal(address(eth), user_, initialUserEthBalance_);
+            vm.startPrank(user_);
+            eth.approve(address(dexBook), newEthAmount_ - ethAmount_);
+            uint48 newOrderId_ = dexBook.modifySellLimitOrder(
+                orderId_, price_, newPrice_, newUsdcAmount_, new uint128[](1), new uint128[](1)
+            );
+            vm.stopPrank();
+
+            assertApproxEq(eth.balanceOf(address(dexBook)), initialDexBookEthBalance_ + newEthAmount_ - ethAmount_);
+            assertApproxEq(eth.balanceOf(user_), initialUserEthBalance_ + ethAmount_ - newEthAmount_);
+
+            if (price_ != newPrice_) assertEq(dexBook.sellOrderAtPrice(price_, orderId_).amount, 0);
+            assertApproxEq(dexBook.sellOrderAtPrice(newPrice_, newOrderId_).amount, newUsdcAmount_);
+        } else {
+            vm.prank(user_);
+            uint48 newOrderId_ = dexBook.modifySellLimitOrder(
+                orderId_, price_, newPrice_, newUsdcAmount_, new uint128[](1), new uint128[](1)
+            );
+
+            assertApproxEq(eth.balanceOf(address(dexBook)), initialDexBookEthBalance_ + newEthAmount_ - ethAmount_);
+            assertApproxEq(eth.balanceOf(user_), initialUserEthBalance_ + ethAmount_ - newEthAmount_);
+
+            if (price_ != newPrice_) assertEq(dexBook.sellOrderAtPrice(price_, orderId_).amount, 0);
+            assertApproxEq(dexBook.sellOrderAtPrice(newPrice_, newOrderId_).amount, newUsdcAmount_);
+        }
+    }
+
     function assertApproxEq(uint256 a_, uint256 b_) internal {
+        if (a_ == b_) return;
+
         assertGt(a_, b_ * 999_999 / 1_000_000);
     }
 
@@ -452,7 +781,7 @@ contract DexBookTest is Test {
     }
 
     function _usdcToEth(uint256 amount_, uint128 price_) internal pure returns (uint256) {
-        return amount_ * 1e18 * 1e18 / price_ / 1e6;
+        return amount_ * 1e18 * 1e18 / 1e6 / price_;
     }
 
     function _invertPrice(uint128 price_) internal pure returns (uint128) {

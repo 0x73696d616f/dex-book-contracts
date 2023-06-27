@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
 
 library LibLinkedOrders {
+    /// @notice NULL is a constant that represents an invalid order id
     uint48 internal constant NULL = uint48(0);
 
     /**
@@ -34,6 +35,7 @@ library LibLinkedOrders {
         mapping(uint48 => Order) orders;
     }
 
+    /// @notice OrderDoesNotExistError is emitted when an order does not exist
     error OrderDoesNotExistError();
 
     /**
@@ -100,6 +102,8 @@ library LibLinkedOrders {
      *         after removing the last order, returns. Else, does a partial fulfillment of the last order, if it exists
      * @param self is the linked list of orders
      * @param targetAmount_ is the cummulative amount to be removed
+     * @param price_ is the price of the order
+     * @param _f is the function to be called when an order is removed
      */
     function removeUntilTarget(
         LinkedOrders storage self,
@@ -145,6 +149,10 @@ library LibLinkedOrders {
         return (targetAmount_, false);
     }
 
+    /**
+     * @notice returns the orders in a linked list of orders
+     * @param self is the linked list of orders
+     */
     function getOrders(LinkedOrders storage self) internal view returns (LibLinkedOrders.Order[] memory orders_) {
         uint48 curr_ = self.head;
         uint256 i_;

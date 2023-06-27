@@ -6,31 +6,66 @@ import { LibLinkedOrders } from "./LibLinkedOrders.sol";
 library LibPriceBrackets {
     using LibLinkedOrders for LibLinkedOrders.LinkedOrders;
 
+    /// @notice price precision is required because solidity does not support decimal values
     uint128 internal constant PRICE_PRECISION = 10 ** 18;
 
+    /// @notice NULL price
     uint128 internal constant NULL = uint128(0);
 
+    /**
+     * @notice OrdersByPrice is a struct that contains the price and an array of orders at that price
+     * @dev useful to fetch off chain all orders at a given price
+     * @param price is the price of the orders
+     * @param orders is an array of orders at that price
+     */
     struct OrdersByPrice {
         uint128 price;
         LibLinkedOrders.Order[] orders;
     }
 
+    /**
+     * @notice PriceBracket is a struct that contains the previous and next price brackets and a linked list of orders
+     * @dev a linked list is used to allow insertion and removal of orders in constant time (given hints)
+     * @param prev is the previous price bracket
+     * @param next is the next price bracket
+     */
     struct PriceBracket {
         uint128 prev;
         uint128 next;
         LibLinkedOrders.LinkedOrders linkedOrders;
     }
 
+    /**
+     * @notice PriceBrackets is a struct that contains the lowest and highest price and a mapping of price to price bracket
+     * @dev contains the head (lowest price) and tail (highest price) of the linked list of price brackets
+     * @param lowestPrice is the lowest price
+     * @param highestPrice is the highest price
+     * @param priceBrackets is a mapping from price to price bracket
+     */
     struct PriceBrackets {
         uint128 lowestPrice;
         uint128 highestPrice;
         mapping(uint128 => PriceBracket) priceBrackets;
     }
 
+    /// @notice emitted when the hints are wrong and the current price is bigger than the previous hinted price
     error PriceSmallerThanPrevError();
+
+    /// @notice emitted when the hints are wrong and the current price is smaller than the next hinted price
     error PriceBiggerThanNextError();
+
+    /// @notice emitted when the price bracket does not exist
     error PriceBracketDoesNotExistError();
 
+    /**
+     *
+     * @param self the price bracket with the list of orders
+     * @param price_ the price of the order that the market order maker will have to pay
+     * @param maker_  the address of the order maker
+     * @param amount_  the amount of token that will be sent to the maker
+     * @param prevs_  hints for the closest existing previous prices
+     * @param nexts_  hints for the closest existing next prices
+     */
     function insertOrder(
         PriceBrackets storage self,
         uint128 price_,
@@ -55,6 +90,14 @@ library LibPriceBrackets {
         next_ == NULL ? self.highestPrice = price_ : self.priceBrackets[next_].prev = price_;
     }
 
+    /**
+     * @notice removes an order from the price bracket
+     * @param self  the price bracket with the list of orders
+     * @param price_  the price of the order that the market order maker would have to pay
+     * @param orderId_  the id of the order to remove
+     * @return maker_  the address of the order maker
+     * @return amount_  the amount of token that will be sent to the maker
+     */
     function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_)
         internal
         returns (address, uint256)
@@ -76,6 +119,15 @@ library LibPriceBrackets {
         return (maker_, amount_);
     }
 
+    /**
+     * @notice modifies an order from the price bracket
+     * @param self  the price bracket with the list of orders
+     * @param price_  the price of the order that the market order maker will have to pay
+     * @param orderId_  the id of the order to modify
+     * @param newAmount_  the new amount of token that will be sent to the maker
+     * @return maker_  the address of the order maker
+     * @return amount_  the amount of token that will be sent to the maker
+     */
     function modifyOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, uint256 newAmount_)
         internal
         returns (address, uint256)
@@ -84,6 +136,15 @@ library LibPriceBrackets {
         return self.priceBrackets[price_].linkedOrders.modify(orderId_, newAmount_);
     }
 
+    /**
+     * @notice removes orders from the price bracket until the target amount is reached
+     * @dev when a market order is placed, it fills limit orders until the target
+     * @param self  the price bracket with the list of orders
+     * @param targetAmount_  the target amount to reach
+     * @param _f  the function to call for each order removed
+     * @return accumulatedAmount_  the accumulated amount summed by filling orders. Might not reach the target
+     * @return accumulatedCost_  the accumulated cost for the market order maker to pay
+     */
     function removeOrdersUntilTarget(
         PriceBrackets storage self,
         uint256 targetAmount_,
@@ -116,10 +177,23 @@ library LibPriceBrackets {
         if (currentPrice_ == NULL) delete self.highestPrice;
     }
 
+    /**
+     * @notice checks if a price bracket exists
+     * @param self  the price bracket with the list of orders
+     * @param price_  the price of the order that the market order maker will have to pay
+     * @return exists_  true if the price bracket exists
+     */
     function exists(PriceBrackets storage self, uint128 price_) internal view returns (bool) {
         return self.priceBrackets[price_].linkedOrders.head != 0;
     }
 
+    /**
+     * @notice finds the closest previous price bracket to the price
+     * @param self  the price bracket with the list of orders
+     * @param prevs_  the list of previous prices to find the closest previous price
+     * @param price_  the price of the order that the market order maker will have to pay
+     * @return prev_  the closest previous price bracket
+     */
     function _findClosestPrev(PriceBrackets storage self, uint128[] calldata prevs_, uint128 price_)
         internal
         view
@@ -147,6 +221,13 @@ library LibPriceBrackets {
         if (price_ <= prev_) revert PriceSmallerThanPrevError();
     }
 
+    /**
+     * @notice finds the closest next price bracket to the price
+     * @param self  the price bracket with the list of orders
+     * @param nexts_  the list of next prices to find the closest next price
+     * @param price_  the price of the order that the market order maker will have to pay
+     * @return next_  the closest next price bracket
+     */
     function _findClosestNext(PriceBrackets storage self, uint128[] calldata nexts_, uint128 price_)
         internal
         view
@@ -175,12 +256,18 @@ library LibPriceBrackets {
         if (price_ >= next_ && next_ != NULL) revert PriceBiggerThanNextError();
     }
 
+    /**
+     *
+     * @param self the price bracket with the list of orders
+     * @dev used to fetch the price brackets off chain. Converts the linked list to an array
+     * @return prices_  an array with all the price brackets
+     */
     function getPrices(PriceBrackets storage self) internal view returns (uint128[] memory prices_) {
         uint256 length_;
         uint128 curr_ = self.lowestPrice;
         if (curr_ == 0) return new uint128[](0);
 
-        prices_ = new uint128[](5000);
+        prices_ = new uint128[](5000); // we don't know the number of price brackets, so we set a max
         while (curr_ != 0) {
             prices_[length_++] = curr_;
             curr_ = self.priceBrackets[curr_].next;
@@ -194,6 +281,12 @@ library LibPriceBrackets {
         return correctPrices_;
     }
 
+    /**
+     * @notice gets the orders at a specific price bracket
+     * @param self the price bracket with the list of orders
+     * @param price_ the price of the order that the market order maker will have to pay
+     * @return orders_  an array with all the orders at the price bracket
+     */
     function getOrdersAtPrice(PriceBrackets storage self, uint128 price_)
         internal
         view
@@ -202,6 +295,13 @@ library LibPriceBrackets {
         return self.priceBrackets[price_].linkedOrders.getOrders();
     }
 
+    /**
+     * @notice gets the order at a specific price bracket and order id
+     * @param self the price bracket with the list of orders
+     * @param price_ the price of the order that the market order maker will have to pay
+     * @param orderId_ the id of the order
+     * @return order_  the order at the price bracket and order id
+     */
     function getOrderAtPrice(PriceBrackets storage self, uint128 price_, uint48 orderId_)
         internal
         view
@@ -210,6 +310,12 @@ library LibPriceBrackets {
         return self.priceBrackets[price_].linkedOrders.orders[orderId_];
     }
 
+    /**
+     * @notice gets all the orders in every price bracket
+     * @dev used to fetch all the orders off chain. Converts the linked lists to an array of `OrdersByPrice`
+     * @param self the price bracket with the list of orders
+     * @return correctOrdersByPrices_  an array with all the orders at the price bracket
+     */
     function getOrdersAndPrices(PriceBrackets storage self)
         internal
         view
