@@ -438,7 +438,7 @@ contract DexBook {
 
     /**
      * @notice returns the priceBrackets of the sell orders
-     * @return priceBrackets of the sell orders
+     * @return prices_ priceBrackets of the sell orders
      */
     function sellOrdersPrices() external view returns (uint128[] memory prices_) {
         return _sellOrders.getPrices();
@@ -446,7 +446,7 @@ contract DexBook {
 
     /**
      * @notice returns the priceBrackets of the buy orders
-     * @return priceBrackets of the buy orders
+     * @return prices_ priceBrackets of the buy orders
      */
     function buyOrdersPrices() external view returns (uint128[] memory prices_) {
         return _buyOrders.getPrices();
@@ -455,7 +455,7 @@ contract DexBook {
     /**
      * @notice returns the sell orders at a given price
      * @param price_ tokenA/tokenB price, not considering decimals, with `PRICE_PRECISION`
-     * @return ordered sell orders array at a given price
+     * @return orders_ ordered sell orders array at a given price
      */
     function sellOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_) {
         return _sellOrders.getOrdersAtPrice(price_);
@@ -464,7 +464,7 @@ contract DexBook {
     /**
      * @notice returns the buy orders at a given price
      * @param price_ tokenA/tokenB price, not considering decimals, with `PRICE_PRECISION`
-     * @return ordered buy orders array at a given price
+     * @return orders_ ordered buy orders array at a given price
      */
     function buyOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_) {
         return _buyOrders.getOrdersAtPrice(price_);
@@ -474,7 +474,7 @@ contract DexBook {
      * @notice returns the sell order at a given price and order id
      * @param price_ tokenA/tokenB price, not considering decimals, with `PRICE_PRECISION`
      * @param orderId_ order id
-     * @return sell order at a given price and order id
+     * @return order_ sell order at a given price and order id
      */
     function sellOrderAtPrice(uint128 price_, uint48 orderId_)
         external
@@ -488,7 +488,7 @@ contract DexBook {
      * @notice returns the buy order at a given price and order id
      * @param price_ tokenB/tokenA price, not considering decimals, with `PRICE_PRECISION`
      * @param orderId_ order id
-     * @return buy order at a given price and order id
+     * @return order_ buy order at a given price and order id
      */
     function buyOrderAtPrice(uint128 price_, uint48 orderId_)
         external
@@ -500,7 +500,7 @@ contract DexBook {
 
     /**
      * @notice returns the sell orders and corresponding prices
-     * @return sell orders and corresponding prices
+     * @return orders_ sell orders and corresponding prices
      */
     function sellOrdersAndPrices() external view returns (LibPriceBrackets.OrdersByPrice[] memory orders_) {
         return _sellOrders.getOrdersAndPrices();
@@ -508,7 +508,7 @@ contract DexBook {
 
     /**
      * @notice returns the buy orders and corresponding prices
-     * @return buy orders and corresponding prices
+     * @return orders_ buy orders and corresponding prices
      */
     function buyOrdersAndPrices() external view returns (LibPriceBrackets.OrdersByPrice[] memory orders_) {
         return _buyOrders.getOrdersAndPrices();
