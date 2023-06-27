@@ -163,9 +163,10 @@
 <li><a href="src/lib/LibPriceBrackets.sol/library.LibPriceBrackets.html">LibPriceBrackets</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="liblinkedorders"><a class="header" href="#liblinkedorders">LibLinkedOrders</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/lib/LibLinkedOrders.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/688813d87a3a17653e2a75cf54cd621a6e213871/src/lib/LibLinkedOrders.sol">Git Source</a></p>
 <h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
 <h3 id="null"><a class="header" href="#null">NULL</a></h3>
+<p>NULL is a constant that represents an invalid order id</p>
 <pre><code class="language-solidity">uint48 internal constant NULL = uint48(0);
 </code></pre>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
@@ -217,15 +218,22 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>self</code></td><td><code>LinkedOrders</code></td><td>is the linked list of orders</td></tr>
 <tr><td><code>targetAmount_</code></td><td><code>uint256</code></td><td>is the cummulative amount to be removed</td></tr>
-<tr><td><code>price_</code></td><td><code>uint128</code></td><td></td></tr>
-<tr><td><code>_f</code></td><td><code>function (uint48, uint128, address, uint256) internal</code></td><td></td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>is the price of the order</td></tr>
+<tr><td><code>_f</code></td><td><code>function (uint48, uint128, address, uint256) internal</code></td><td>is the function to be called when an order is removed</td></tr>
 </tbody></table>
 </div>
 <h3 id="getorders"><a class="header" href="#getorders">getOrders</a></h3>
+<p>returns the orders in a linked list of orders</p>
 <pre><code class="language-solidity">function getOrders(LinkedOrders storage self) internal view returns (LibLinkedOrders.Order[] memory orders_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>LinkedOrders</code></td><td>is the linked list of orders</td></tr>
+</tbody></table>
+</div>
 <h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
 <h3 id="orderdoesnotexisterror"><a class="header" href="#orderdoesnotexisterror">OrderDoesNotExistError</a></h3>
+<p>OrderDoesNotExistError is emitted when an order does not exist</p>
 <pre><code class="language-solidity">error OrderDoesNotExistError();
 </code></pre>
 <h2 id="structs"><a class="header" href="#structs">Structs</a></h2>
@@ -248,12 +256,14 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="libpricebrackets"><a class="header" href="#libpricebrackets">LibPriceBrackets</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/lib/LibPriceBrackets.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/688813d87a3a17653e2a75cf54cd621a6e213871/src/lib/LibPriceBrackets.sol">Git Source</a></p>
 <h2 id="state-variables-1"><a class="header" href="#state-variables-1">State Variables</a></h2>
 <h3 id="price_precision"><a class="header" href="#price_precision">PRICE_PRECISION</a></h3>
+<p>price precision is required because solidity does not support decimal values</p>
 <pre><code class="language-solidity">uint128 internal constant PRICE_PRECISION = 10 ** 18;
 </code></pre>
 <h3 id="null-1"><a class="header" href="#null-1">NULL</a></h3>
+<p>NULL price</p>
 <pre><code class="language-solidity">uint128 internal constant NULL = uint128(0);
 </code></pre>
 <h2 id="functions-1"><a class="header" href="#functions-1">Functions</a></h2>
@@ -267,75 +277,222 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
     uint128[] calldata nexts_
 ) internal returns (uint48 orderId_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+<tr><td><code>maker_</code></td><td><code>address</code></td><td>the address of the order maker</td></tr>
+<tr><td><code>amount_</code></td><td><code>uint256</code></td><td>the amount of token that will be sent to the maker</td></tr>
+<tr><td><code>prevs_</code></td><td><code>uint128[]</code></td><td>hints for the closest existing previous prices</td></tr>
+<tr><td><code>nexts_</code></td><td><code>uint128[]</code></td><td>hints for the closest existing next prices</td></tr>
+</tbody></table>
+</div>
 <h3 id="removeorder"><a class="header" href="#removeorder">removeOrder</a></h3>
+<p>removes an order from the price bracket</p>
 <pre><code class="language-solidity">function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_) internal returns (address, uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker would have to pay</td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>the id of the order to remove</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>address</code></td><td>maker_  the address of the order maker</td></tr>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount_  the amount of token that will be sent to the maker</td></tr>
+</tbody></table>
+</div>
 <h3 id="modifyorder"><a class="header" href="#modifyorder">modifyOrder</a></h3>
+<p>modifies an order from the price bracket</p>
 <pre><code class="language-solidity">function modifyOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, uint256 newAmount_)
     internal
     returns (address, uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>the id of the order to modify</td></tr>
+<tr><td><code>newAmount_</code></td><td><code>uint256</code></td><td>the new amount of token that will be sent to the maker</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>address</code></td><td>maker_  the address of the order maker</td></tr>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount_  the amount of token that will be sent to the maker</td></tr>
+</tbody></table>
+</div>
 <h3 id="removeordersuntiltarget"><a class="header" href="#removeordersuntiltarget">removeOrdersUntilTarget</a></h3>
+<p>removes orders from the price bracket until the target amount is reached</p>
+<p><em>when a market order is placed, it fills limit orders until the target</em></p>
 <pre><code class="language-solidity">function removeOrdersUntilTarget(
     PriceBrackets storage self,
     uint256 targetAmount_,
     function(uint48,uint128,address,uint256) internal _f
 ) internal returns (uint256 accumulatedAmount_, uint256 accumulatedCost_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>targetAmount_</code></td><td><code>uint256</code></td><td>the target amount to reach</td></tr>
+<tr><td><code>_f</code></td><td><code>function (uint48, uint128, address, uint256) internal</code></td><td>the function to call for each order removed</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>accumulatedAmount_</code></td><td><code>uint256</code></td><td>the accumulated amount summed by filling orders. Might not reach the target</td></tr>
+<tr><td><code>accumulatedCost_</code></td><td><code>uint256</code></td><td>the accumulated cost for the market order maker to pay</td></tr>
+</tbody></table>
+</div>
 <h3 id="exists"><a class="header" href="#exists">exists</a></h3>
+<p>checks if a price bracket exists</p>
 <pre><code class="language-solidity">function exists(PriceBrackets storage self, uint128 price_) internal view returns (bool);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>bool</code></td><td>exists_  true if the price bracket exists</td></tr>
+</tbody></table>
+</div>
 <h3 id="_findclosestprev"><a class="header" href="#_findclosestprev">_findClosestPrev</a></h3>
+<p>finds the closest previous price bracket to the price</p>
 <pre><code class="language-solidity">function _findClosestPrev(PriceBrackets storage self, uint128[] calldata prevs_, uint128 price_)
     internal
     view
     returns (uint128 prev_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>prevs_</code></td><td><code>uint128[]</code></td><td>the list of previous prices to find the closest previous price</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>prev_</code></td><td><code>uint128</code></td><td>the closest previous price bracket</td></tr>
+</tbody></table>
+</div>
 <h3 id="_findclosestnext"><a class="header" href="#_findclosestnext">_findClosestNext</a></h3>
+<p>finds the closest next price bracket to the price</p>
 <pre><code class="language-solidity">function _findClosestNext(PriceBrackets storage self, uint128[] calldata nexts_, uint128 price_)
     internal
     view
     returns (uint128 next_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>nexts_</code></td><td><code>uint128[]</code></td><td>the list of next prices to find the closest next price</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>next_</code></td><td><code>uint128</code></td><td>the closest next price bracket</td></tr>
+</tbody></table>
+</div>
 <h3 id="getprices"><a class="header" href="#getprices">getPrices</a></h3>
+<p><em>used to fetch the price brackets off chain. Converts the linked list to an array</em></p>
 <pre><code class="language-solidity">function getPrices(PriceBrackets storage self) internal view returns (uint128[] memory prices_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>prices_</code></td><td><code>uint128[]</code></td><td>an array with all the price brackets</td></tr>
+</tbody></table>
+</div>
 <h3 id="getordersatprice"><a class="header" href="#getordersatprice">getOrdersAtPrice</a></h3>
+<p>gets the orders at a specific price bracket</p>
 <pre><code class="language-solidity">function getOrdersAtPrice(PriceBrackets storage self, uint128 price_)
     internal
     view
     returns (LibLinkedOrders.Order[] memory);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>LibLinkedOrders.Order[]</code></td><td>orders_  an array with all the orders at the price bracket</td></tr>
+</tbody></table>
+</div>
 <h3 id="getorderatprice"><a class="header" href="#getorderatprice">getOrderAtPrice</a></h3>
+<p>gets the order at a specific price bracket and order id</p>
 <pre><code class="language-solidity">function getOrderAtPrice(PriceBrackets storage self, uint128 price_, uint48 orderId_)
     internal
     view
     returns (LibLinkedOrders.Order memory);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>the id of the order</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>LibLinkedOrders.Order</code></td><td>order_  the order at the price bracket and order id</td></tr>
+</tbody></table>
+</div>
 <h3 id="getordersandprices"><a class="header" href="#getordersandprices">getOrdersAndPrices</a></h3>
+<p>gets all the orders in every price bracket</p>
+<p><em>used to fetch all the orders off chain. Converts the linked lists to an array of <code>OrdersByPrice</code></em></p>
 <pre><code class="language-solidity">function getOrdersAndPrices(PriceBrackets storage self)
     internal
     view
     returns (OrdersByPrice[] memory correctOrdersByPrices_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>correctOrdersByPrices_</code></td><td><code>OrdersByPrice[]</code></td><td>an array with all the orders at the price bracket</td></tr>
+</tbody></table>
+</div>
 <h2 id="errors-1"><a class="header" href="#errors-1">Errors</a></h2>
 <h3 id="pricesmallerthanpreverror"><a class="header" href="#pricesmallerthanpreverror">PriceSmallerThanPrevError</a></h3>
+<p>emitted when the hints are wrong and the current price is bigger than the previous hinted price</p>
 <pre><code class="language-solidity">error PriceSmallerThanPrevError();
 </code></pre>
 <h3 id="pricebiggerthannexterror"><a class="header" href="#pricebiggerthannexterror">PriceBiggerThanNextError</a></h3>
+<p>emitted when the hints are wrong and the current price is smaller than the next hinted price</p>
 <pre><code class="language-solidity">error PriceBiggerThanNextError();
 </code></pre>
 <h3 id="pricebracketdoesnotexisterror"><a class="header" href="#pricebracketdoesnotexisterror">PriceBracketDoesNotExistError</a></h3>
+<p>emitted when the price bracket does not exist</p>
 <pre><code class="language-solidity">error PriceBracketDoesNotExistError();
 </code></pre>
 <h2 id="structs-1"><a class="header" href="#structs-1">Structs</a></h2>
 <h3 id="ordersbyprice"><a class="header" href="#ordersbyprice">OrdersByPrice</a></h3>
+<p>OrdersByPrice is a struct that contains the price and an array of orders at that price</p>
+<p><em>useful to fetch off chain all orders at a given price</em></p>
 <pre><code class="language-solidity">struct OrdersByPrice {
     uint128 price;
     LibLinkedOrders.Order[] orders;
 }
 </code></pre>
 <h3 id="pricebracket"><a class="header" href="#pricebracket">PriceBracket</a></h3>
+<p>PriceBracket is a struct that contains the previous and next price brackets and a linked list of orders</p>
+<p><em>a linked list is used to allow insertion and removal of orders in constant time (given hints)</em></p>
 <pre><code class="language-solidity">struct PriceBracket {
     uint128 prev;
     uint128 next;
@@ -343,6 +500,8 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 }
 </code></pre>
 <h3 id="pricebrackets"><a class="header" href="#pricebrackets">PriceBrackets</a></h3>
+<p>PriceBrackets is a struct that contains the lowest and highest price and a mapping of price to price bracket</p>
+<p><em>contains the head (lowest price) and tail (highest price) of the linked list of price brackets</em></p>
 <pre><code class="language-solidity">struct PriceBrackets {
     uint128 lowestPrice;
     uint128 highestPrice;
@@ -356,7 +515,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 <li><a href="src/token/WETH.sol/contract.WETH.html">WETH</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="fauceterc20"><a class="header" href="#fauceterc20">FaucetERC20</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/token/FaucetERC20.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/688813d87a3a17653e2a75cf54cd621a6e213871/src/token/FaucetERC20.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC20</p>
 <h2 id="functions-2"><a class="header" href="#functions-2">Functions</a></h2>
@@ -367,7 +526,7 @@ ERC20</p>
 <pre><code class="language-solidity">function faucet() external;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="usdc"><a class="header" href="#usdc">USDC</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/token/USDC.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/688813d87a3a17653e2a75cf54cd621a6e213871/src/token/USDC.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/USDC.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-3"><a class="header" href="#functions-3">Functions</a></h2>
@@ -378,7 +537,7 @@ ERC20</p>
 <pre><code class="language-solidity">function decimals() public view virtual override returns (uint8);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="weth"><a class="header" href="#weth">WETH</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/token/WETH.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/688813d87a3a17653e2a75cf54cd621a6e213871/src/token/WETH.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/WETH.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-4"><a class="header" href="#functions-4">Functions</a></h2>
@@ -386,42 +545,59 @@ ERC20</p>
 <pre><code class="language-solidity">constructor() FaucetERC20(&quot;Wrapped Ether&quot;, &quot;WETH&quot;);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="dexbook"><a class="header" href="#dexbook">DexBook</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/DexBook.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/688813d87a3a17653e2a75cf54cd621a6e213871/src/DexBook.sol">Git Source</a></p>
 <h2 id="state-variables-2"><a class="header" href="#state-variables-2">State Variables</a></h2>
 <h3 id="price_precision-1"><a class="header" href="#price_precision-1">PRICE_PRECISION</a></h3>
+<p>price precision is required to represent prices below 0</p>
 <pre><code class="language-solidity">uint128 internal constant PRICE_PRECISION = 10 ** 18;
 </code></pre>
 <h3 id="basis_point"><a class="header" href="#basis_point">BASIS_POINT</a></h3>
+<p>basis point is 1/100 of a percent</p>
 <pre><code class="language-solidity">uint256 internal constant BASIS_POINT = 10 ** 4;
 </code></pre>
 <h3 id="_protocolfee"><a class="header" href="#_protocolfee">_protocolFee</a></h3>
+<p>protocol fee is 10 basis points or 0.1%</p>
 <pre><code class="language-solidity">uint256 internal constant _protocolFee = 10;
 </code></pre>
 <h3 id="_tokenadecimals"><a class="header" href="#_tokenadecimals">_tokenADecimals</a></h3>
+<p>caches <code>tokenA</code> decimals to save on gas costs</p>
 <pre><code class="language-solidity">uint256 internal immutable _tokenADecimals;
 </code></pre>
 <h3 id="_tokenbdecimals"><a class="header" href="#_tokenbdecimals">_tokenBDecimals</a></h3>
+<p>caches <code>tokenB</code> decimals to save on gas costs</p>
 <pre><code class="language-solidity">uint256 internal immutable _tokenBDecimals;
 </code></pre>
 <h3 id="_tokena"><a class="header" href="#_tokena">_tokenA</a></h3>
+<p>token A of this address</p>
 <pre><code class="language-solidity">address internal immutable _tokenA;
 </code></pre>
 <h3 id="_tokenb"><a class="header" href="#_tokenb">_tokenB</a></h3>
+<p>token B of this address</p>
 <pre><code class="language-solidity">address internal immutable _tokenB;
 </code></pre>
 <h3 id="_feerecipient"><a class="header" href="#_feerecipient">_feeRecipient</a></h3>
+<p>address that receives protocol fees</p>
 <pre><code class="language-solidity">address internal immutable _feeRecipient;
 </code></pre>
 <h3 id="_buyorders"><a class="header" href="#_buyorders">_buyOrders</a></h3>
+<p>stores all buy orders</p>
 <pre><code class="language-solidity">LibPriceBrackets.PriceBrackets internal _buyOrders;
 </code></pre>
 <h3 id="_sellorders"><a class="header" href="#_sellorders">_sellOrders</a></h3>
+<p>stores all sell orders</p>
 <pre><code class="language-solidity">LibPriceBrackets.PriceBrackets internal _sellOrders;
 </code></pre>
 <h2 id="functions-5"><a class="header" href="#functions-5">Functions</a></h2>
 <h3 id="constructor-3"><a class="header" href="#constructor-3">constructor</a></h3>
+<p>constructor of the contract. Sets the tokenA and tokenB</p>
 <pre><code class="language-solidity">constructor(address tokenA_, address tokenB_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>tokenA_</code></td><td><code>address</code></td><td>the tokenA</td></tr>
+<tr><td><code>tokenB_</code></td><td><code>address</code></td><td>the tokenB</td></tr>
+</tbody></table>
+</div>
 <h3 id="placebuylimitorder"><a class="header" href="#placebuylimitorder">placeBuyLimitOrder</a></h3>
 <pre><code class="language-solidity">function placeBuyLimitOrder(uint256 amount_, uint128 price_, uint128[] calldata prevs_, uint128[] calldata nexts_)
     external
@@ -468,7 +644,7 @@ ERC20</p>
 </div>
 <h3 id="removebuylimitorder"><a class="header" href="#removebuylimitorder">removeBuyLimitOrder</a></h3>
 <p>removes a buy limit order from the order book</p>
-<pre><code class="language-solidity">function removeBuyLimitOrder(uint48 orderId_, uint128 price_) public;
+<pre><code class="language-solidity">function removeBuyLimitOrder(uint48 orderId_, uint128 price_) external;
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -478,7 +654,7 @@ ERC20</p>
 </div>
 <h3 id="removeselllimitorder"><a class="header" href="#removeselllimitorder">removeSellLimitOrder</a></h3>
 <p>removes a sell limit order from the order book</p>
-<pre><code class="language-solidity">function removeSellLimitOrder(uint48 orderId_, uint128 price_) public;
+<pre><code class="language-solidity">function removeSellLimitOrder(uint48 orderId_, uint128 price_) external;
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -496,7 +672,7 @@ ERC20</p>
     uint256 newAmount_,
     uint128[] calldata prevs_,
     uint128[] calldata nexts_
-) external;
+) external returns (uint48);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -518,7 +694,7 @@ ERC20</p>
     uint256 newAmount_,
     uint128[] calldata prevs_,
     uint128[] calldata nexts_
-) external;
+) external returns (uint48);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -531,74 +707,255 @@ ERC20</p>
 </tbody></table>
 </div>
 <h3 id="tokenatotokenb"><a class="header" href="#tokenatotokenb">tokenAToTokenB</a></h3>
+<p>returns tokenB from a tokenA argument and a tokenB/tokenA price</p>
 <pre><code class="language-solidity">function tokenAToTokenB(uint256 amount_, uint256 price_) public view returns (uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>amount_</code></td><td><code>uint256</code></td><td>amount of tokenA to convert</td></tr>
+<tr><td><code>price_</code></td><td><code>uint256</code></td><td>tokenB/tokenA price, not considering decimals, with <code>PRICE_PRECISION</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount of tokenB</td></tr>
+</tbody></table>
+</div>
 <h3 id="tokenbtotokena"><a class="header" href="#tokenbtotokena">tokenBToTokenA</a></h3>
+<p>returns tokenA from a tokenB argument and a tokenA/tokenB price</p>
 <pre><code class="language-solidity">function tokenBToTokenA(uint256 amount_, uint256 price_) public view returns (uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>amount_</code></td><td><code>uint256</code></td><td>amount of tokenB to convert</td></tr>
+<tr><td><code>price_</code></td><td><code>uint256</code></td><td>tokenA/tokenB price, not considering decimals, with <code>PRICE_PRECISION</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount of tokenA</td></tr>
+</tbody></table>
+</div>
 <h3 id="tokenatotokenbdecimals"><a class="header" href="#tokenatotokenbdecimals">tokenAToTokenBDecimals</a></h3>
+<p>converts tokenA decimals to tokenB decimals</p>
 <pre><code class="language-solidity">function tokenAToTokenBDecimals(uint256 amount_) public view returns (uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>amount_</code></td><td><code>uint256</code></td><td>amount of tokenA to convert</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount of tokenB</td></tr>
+</tbody></table>
+</div>
 <h3 id="tokenbtotokenadecimals"><a class="header" href="#tokenbtotokenadecimals">tokenBToTokenADecimals</a></h3>
+<p>converts tokenB decimals to tokenA decimals</p>
 <pre><code class="language-solidity">function tokenBToTokenADecimals(uint256 amount_) public view returns (uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>amount_</code></td><td><code>uint256</code></td><td>amount of tokenB to convert</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount of tokenA</td></tr>
+</tbody></table>
+</div>
 <h3 id="priceprecision"><a class="header" href="#priceprecision">pricePrecision</a></h3>
+<p>returns the precision used in the prices</p>
 <pre><code class="language-solidity">function pricePrecision() external pure returns (uint128);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint128</code></td><td>precision</td></tr>
+</tbody></table>
+</div>
 <h3 id="tokena"><a class="header" href="#tokena">tokenA</a></h3>
+<p>returns tokenA address</p>
 <pre><code class="language-solidity">function tokenA() external view returns (address);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>address</code></td><td>tokenA address</td></tr>
+</tbody></table>
+</div>
 <h3 id="tokenb"><a class="header" href="#tokenb">tokenB</a></h3>
+<p>returns tokenB address</p>
 <pre><code class="language-solidity">function tokenB() external view returns (address);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>address</code></td><td>tokenB address</td></tr>
+</tbody></table>
+</div>
 <h3 id="tokenadecimals"><a class="header" href="#tokenadecimals">tokenADecimals</a></h3>
+<p>returns tokenA decimals</p>
 <pre><code class="language-solidity">function tokenADecimals() external view returns (uint256);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>tokenA decimals</td></tr>
+</tbody></table>
+</div>
 <h3 id="tokenbdecimals"><a class="header" href="#tokenbdecimals">tokenBDecimals</a></h3>
+<p>returns tokenB decimals</p>
 <pre><code class="language-solidity">function tokenBDecimals() external view returns (uint256);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>tokenB decimals</td></tr>
+</tbody></table>
+</div>
 <h3 id="protocolfee"><a class="header" href="#protocolfee">protocolFee</a></h3>
+<p>returns the protocol fee</p>
 <pre><code class="language-solidity">function protocolFee() external pure returns (uint256);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>protocol fee</td></tr>
+</tbody></table>
+</div>
 <h3 id="feerecipient"><a class="header" href="#feerecipient">feeRecipient</a></h3>
+<p>returns the address of the fee recipient</p>
 <pre><code class="language-solidity">function feeRecipient() external view returns (address);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>address</code></td><td>fee recipient</td></tr>
+</tbody></table>
+</div>
 <h3 id="sellordersprices"><a class="header" href="#sellordersprices">sellOrdersPrices</a></h3>
+<p>returns the priceBrackets of the sell orders</p>
 <pre><code class="language-solidity">function sellOrdersPrices() external view returns (uint128[] memory prices_);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>prices_</code></td><td><code>uint128[]</code></td><td>priceBrackets of the sell orders</td></tr>
+</tbody></table>
+</div>
 <h3 id="buyordersprices"><a class="header" href="#buyordersprices">buyOrdersPrices</a></h3>
+<p>returns the priceBrackets of the buy orders</p>
 <pre><code class="language-solidity">function buyOrdersPrices() external view returns (uint128[] memory prices_);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>prices_</code></td><td><code>uint128[]</code></td><td>priceBrackets of the buy orders</td></tr>
+</tbody></table>
+</div>
 <h3 id="sellordersatprice"><a class="header" href="#sellordersatprice">sellOrdersAtPrice</a></h3>
+<p>returns the sell orders at a given price</p>
 <pre><code class="language-solidity">function sellOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>tokenA/tokenB price, not considering decimals, with <code>PRICE_PRECISION</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>orders_</code></td><td><code>LibLinkedOrders.Order[]</code></td><td>ordered sell orders array at a given price</td></tr>
+</tbody></table>
+</div>
 <h3 id="buyordersatprice"><a class="header" href="#buyordersatprice">buyOrdersAtPrice</a></h3>
+<p>returns the buy orders at a given price</p>
 <pre><code class="language-solidity">function buyOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>tokenA/tokenB price, not considering decimals, with <code>PRICE_PRECISION</code></td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>orders_</code></td><td><code>LibLinkedOrders.Order[]</code></td><td>ordered buy orders array at a given price</td></tr>
+</tbody></table>
+</div>
 <h3 id="sellorderatprice"><a class="header" href="#sellorderatprice">sellOrderAtPrice</a></h3>
+<p>returns the sell order at a given price and order id</p>
 <pre><code class="language-solidity">function sellOrderAtPrice(uint128 price_, uint48 orderId_)
     external
     view
     returns (LibLinkedOrders.Order memory order_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>tokenA/tokenB price, not considering decimals, with <code>PRICE_PRECISION</code></td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>order id</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>order_</code></td><td><code>LibLinkedOrders.Order</code></td><td>sell order at a given price and order id</td></tr>
+</tbody></table>
+</div>
 <h3 id="buyorderatprice"><a class="header" href="#buyorderatprice">buyOrderAtPrice</a></h3>
+<p>returns the buy order at a given price and order id</p>
 <pre><code class="language-solidity">function buyOrderAtPrice(uint128 price_, uint48 orderId_) external view returns (LibLinkedOrders.Order memory order_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>tokenB/tokenA price, not considering decimals, with <code>PRICE_PRECISION</code></td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>order id</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>order_</code></td><td><code>LibLinkedOrders.Order</code></td><td>buy order at a given price and order id</td></tr>
+</tbody></table>
+</div>
 <h3 id="sellordersandprices"><a class="header" href="#sellordersandprices">sellOrdersAndPrices</a></h3>
+<p>returns the sell orders and corresponding prices</p>
 <pre><code class="language-solidity">function sellOrdersAndPrices() external view returns (LibPriceBrackets.OrdersByPrice[] memory orders_);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>orders_</code></td><td><code>LibPriceBrackets.OrdersByPrice[]</code></td><td>sell orders and corresponding prices</td></tr>
+</tbody></table>
+</div>
 <h3 id="buyordersandprices"><a class="header" href="#buyordersandprices">buyOrdersAndPrices</a></h3>
+<p>returns the buy orders and corresponding prices</p>
 <pre><code class="language-solidity">function buyOrdersAndPrices() external view returns (LibPriceBrackets.OrdersByPrice[] memory orders_);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>orders_</code></td><td><code>LibPriceBrackets.OrdersByPrice[]</code></td><td>buy orders and corresponding prices</td></tr>
+</tbody></table>
+</div>
 <h3 id="invertprice"><a class="header" href="#invertprice">invertPrice</a></h3>
+<p>inverts a price, taking into account <code>PRICE_PRECISION</code></p>
 <pre><code class="language-solidity">function invertPrice(uint128 price_) external pure returns (uint128);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>price with <code>PRICE_PRECISION</code> to invert</td></tr>
+</tbody></table>
+</div>
 <h3 id="amountplusfee"><a class="header" href="#amountplusfee">amountPlusFee</a></h3>
+<p>returns the amount + protocol fee</p>
 <pre><code class="language-solidity">function amountPlusFee(uint256 amount_) external pure returns (uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>amount_</code></td><td><code>uint256</code></td><td>amount to add the protocol fee</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount + protocol fee</td></tr>
+</tbody></table>
+</div>
 <h3 id="basispoint"><a class="header" href="#basispoint">basisPoint</a></h3>
+<p>returns the basis point - 1/100th percent</p>
 <pre><code class="language-solidity">function basisPoint() external pure returns (uint256);
 </code></pre>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>basis point</td></tr>
+</tbody></table>
+</div>
 <h3 id="_fulfillbuylimitorder"><a class="header" href="#_fulfillbuylimitorder">_fulfillBuyLimitOrder</a></h3>
 <pre><code class="language-solidity">function _fulfillBuyLimitOrder(uint48 orderId_, uint128 price_, address maker_, uint256 amount_) internal;
 </code></pre>
@@ -607,44 +964,53 @@ ERC20</p>
 </code></pre>
 <h2 id="events"><a class="header" href="#events">Events</a></h2>
 <h3 id="buylimitorderplaced"><a class="header" href="#buylimitorderplaced">BuyLimitOrderPlaced</a></h3>
+<p>emitted when a buy limit order is placed</p>
 <pre><code class="language-solidity">event BuyLimitOrderPlaced(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="selllimitorderplaced"><a class="header" href="#selllimitorderplaced">SellLimitOrderPlaced</a></h3>
+<p>emitted when a sell limit order is placed</p>
 <pre><code class="language-solidity">event SellLimitOrderPlaced(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="buylimitordercancelled"><a class="header" href="#buylimitordercancelled">BuyLimitOrderCancelled</a></h3>
+<p>emitted when a buy limit order is cancelled</p>
 <pre><code class="language-solidity">event BuyLimitOrderCancelled(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="selllimitordercancelled"><a class="header" href="#selllimitordercancelled">SellLimitOrderCancelled</a></h3>
+<p>emitted when a sell limit order is cancelled</p>
 <pre><code class="language-solidity">event SellLimitOrderCancelled(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="buylimitorderfilled"><a class="header" href="#buylimitorderfilled">BuyLimitOrderFilled</a></h3>
+<p>emitted when a buy limit order is filled</p>
 <pre><code class="language-solidity">event BuyLimitOrderFilled(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="selllimitorderfilled"><a class="header" href="#selllimitorderfilled">SellLimitOrderFilled</a></h3>
+<p>emitted when a sell limit order is filled</p>
 <pre><code class="language-solidity">event SellLimitOrderFilled(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="buylimitordermodified"><a class="header" href="#buylimitordermodified">BuyLimitOrderModified</a></h3>
+<p>emitted when a buy limit order is modified</p>
 <pre><code class="language-solidity">event BuyLimitOrderModified(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="selllimitordermodified"><a class="header" href="#selllimitordermodified">SellLimitOrderModified</a></h3>
+<p>emitted when a sell limit order is modified</p>
 <pre><code class="language-solidity">event SellLimitOrderModified(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="buymarketorderfilled"><a class="header" href="#buymarketorderfilled">BuyMarketOrderFilled</a></h3>
+<p>emitted when a buy market order is filled</p>
 <pre><code class="language-solidity">event BuyMarketOrderFilled(uint256 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="sellmarketorderfilled"><a class="header" href="#sellmarketorderfilled">SellMarketOrderFilled</a></h3>
+<p>emitted when a sell market order is filled</p>
 <pre><code class="language-solidity">event SellMarketOrderFilled(uint256 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h2 id="errors-2"><a class="header" href="#errors-2">Errors</a></h2>
 <h3 id="sameamounterror"><a class="header" href="#sameamounterror">SameAmountError</a></h3>
+<p>emitted when modifying an order with stale new same price and amount</p>
 <pre><code class="language-solidity">error SameAmountError(uint256 amount);
 </code></pre>
 <h3 id="onlymakererror"><a class="header" href="#onlymakererror">OnlyMakerError</a></h3>
+<p>emitted when someone other than the maker tries to remove or modify an order</p>
 <pre><code class="language-solidity">error OnlyMakerError(address maker);
-</code></pre>
-<h3 id="samepriceerror"><a class="header" href="#samepriceerror">SamePriceError</a></h3>
-<pre><code class="language-solidity">error SamePriceError(uint128 price);
 </code></pre>
 
                     </main>

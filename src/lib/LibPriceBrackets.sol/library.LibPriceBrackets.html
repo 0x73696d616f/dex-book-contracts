@@ -149,12 +149,14 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="libpricebrackets"><a class="header" href="#libpricebrackets">LibPriceBrackets</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/579e4e331685321e11528378ca18c8098533e39f/src/lib/LibPriceBrackets.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/688813d87a3a17653e2a75cf54cd621a6e213871/src/lib/LibPriceBrackets.sol">Git Source</a></p>
 <h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
 <h3 id="price_precision"><a class="header" href="#price_precision">PRICE_PRECISION</a></h3>
+<p>price precision is required because solidity does not support decimal values</p>
 <pre><code class="language-solidity">uint128 internal constant PRICE_PRECISION = 10 ** 18;
 </code></pre>
 <h3 id="null"><a class="header" href="#null">NULL</a></h3>
+<p>NULL price</p>
 <pre><code class="language-solidity">uint128 internal constant NULL = uint128(0);
 </code></pre>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
@@ -168,75 +170,222 @@
     uint128[] calldata nexts_
 ) internal returns (uint48 orderId_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+<tr><td><code>maker_</code></td><td><code>address</code></td><td>the address of the order maker</td></tr>
+<tr><td><code>amount_</code></td><td><code>uint256</code></td><td>the amount of token that will be sent to the maker</td></tr>
+<tr><td><code>prevs_</code></td><td><code>uint128[]</code></td><td>hints for the closest existing previous prices</td></tr>
+<tr><td><code>nexts_</code></td><td><code>uint128[]</code></td><td>hints for the closest existing next prices</td></tr>
+</tbody></table>
+</div>
 <h3 id="removeorder"><a class="header" href="#removeorder">removeOrder</a></h3>
+<p>removes an order from the price bracket</p>
 <pre><code class="language-solidity">function removeOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_) internal returns (address, uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker would have to pay</td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>the id of the order to remove</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>address</code></td><td>maker_  the address of the order maker</td></tr>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount_  the amount of token that will be sent to the maker</td></tr>
+</tbody></table>
+</div>
 <h3 id="modifyorder"><a class="header" href="#modifyorder">modifyOrder</a></h3>
+<p>modifies an order from the price bracket</p>
 <pre><code class="language-solidity">function modifyOrder(PriceBrackets storage self, uint128 price_, uint48 orderId_, uint256 newAmount_)
     internal
     returns (address, uint256);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>the id of the order to modify</td></tr>
+<tr><td><code>newAmount_</code></td><td><code>uint256</code></td><td>the new amount of token that will be sent to the maker</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>address</code></td><td>maker_  the address of the order maker</td></tr>
+<tr><td><code>&lt;none&gt;</code></td><td><code>uint256</code></td><td>amount_  the amount of token that will be sent to the maker</td></tr>
+</tbody></table>
+</div>
 <h3 id="removeordersuntiltarget"><a class="header" href="#removeordersuntiltarget">removeOrdersUntilTarget</a></h3>
+<p>removes orders from the price bracket until the target amount is reached</p>
+<p><em>when a market order is placed, it fills limit orders until the target</em></p>
 <pre><code class="language-solidity">function removeOrdersUntilTarget(
     PriceBrackets storage self,
     uint256 targetAmount_,
     function(uint48,uint128,address,uint256) internal _f
 ) internal returns (uint256 accumulatedAmount_, uint256 accumulatedCost_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>targetAmount_</code></td><td><code>uint256</code></td><td>the target amount to reach</td></tr>
+<tr><td><code>_f</code></td><td><code>function (uint48, uint128, address, uint256) internal</code></td><td>the function to call for each order removed</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>accumulatedAmount_</code></td><td><code>uint256</code></td><td>the accumulated amount summed by filling orders. Might not reach the target</td></tr>
+<tr><td><code>accumulatedCost_</code></td><td><code>uint256</code></td><td>the accumulated cost for the market order maker to pay</td></tr>
+</tbody></table>
+</div>
 <h3 id="exists"><a class="header" href="#exists">exists</a></h3>
+<p>checks if a price bracket exists</p>
 <pre><code class="language-solidity">function exists(PriceBrackets storage self, uint128 price_) internal view returns (bool);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>bool</code></td><td>exists_  true if the price bracket exists</td></tr>
+</tbody></table>
+</div>
 <h3 id="_findclosestprev"><a class="header" href="#_findclosestprev">_findClosestPrev</a></h3>
+<p>finds the closest previous price bracket to the price</p>
 <pre><code class="language-solidity">function _findClosestPrev(PriceBrackets storage self, uint128[] calldata prevs_, uint128 price_)
     internal
     view
     returns (uint128 prev_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>prevs_</code></td><td><code>uint128[]</code></td><td>the list of previous prices to find the closest previous price</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>prev_</code></td><td><code>uint128</code></td><td>the closest previous price bracket</td></tr>
+</tbody></table>
+</div>
 <h3 id="_findclosestnext"><a class="header" href="#_findclosestnext">_findClosestNext</a></h3>
+<p>finds the closest next price bracket to the price</p>
 <pre><code class="language-solidity">function _findClosestNext(PriceBrackets storage self, uint128[] calldata nexts_, uint128 price_)
     internal
     view
     returns (uint128 next_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>nexts_</code></td><td><code>uint128[]</code></td><td>the list of next prices to find the closest next price</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>next_</code></td><td><code>uint128</code></td><td>the closest next price bracket</td></tr>
+</tbody></table>
+</div>
 <h3 id="getprices"><a class="header" href="#getprices">getPrices</a></h3>
+<p><em>used to fetch the price brackets off chain. Converts the linked list to an array</em></p>
 <pre><code class="language-solidity">function getPrices(PriceBrackets storage self) internal view returns (uint128[] memory prices_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>prices_</code></td><td><code>uint128[]</code></td><td>an array with all the price brackets</td></tr>
+</tbody></table>
+</div>
 <h3 id="getordersatprice"><a class="header" href="#getordersatprice">getOrdersAtPrice</a></h3>
+<p>gets the orders at a specific price bracket</p>
 <pre><code class="language-solidity">function getOrdersAtPrice(PriceBrackets storage self, uint128 price_)
     internal
     view
     returns (LibLinkedOrders.Order[] memory);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>LibLinkedOrders.Order[]</code></td><td>orders_  an array with all the orders at the price bracket</td></tr>
+</tbody></table>
+</div>
 <h3 id="getorderatprice"><a class="header" href="#getorderatprice">getOrderAtPrice</a></h3>
+<p>gets the order at a specific price bracket and order id</p>
 <pre><code class="language-solidity">function getOrderAtPrice(PriceBrackets storage self, uint128 price_, uint48 orderId_)
     internal
     view
     returns (LibLinkedOrders.Order memory);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+<tr><td><code>price_</code></td><td><code>uint128</code></td><td>the price of the order that the market order maker will have to pay</td></tr>
+<tr><td><code>orderId_</code></td><td><code>uint48</code></td><td>the id of the order</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>&lt;none&gt;</code></td><td><code>LibLinkedOrders.Order</code></td><td>order_  the order at the price bracket and order id</td></tr>
+</tbody></table>
+</div>
 <h3 id="getordersandprices"><a class="header" href="#getordersandprices">getOrdersAndPrices</a></h3>
+<p>gets all the orders in every price bracket</p>
+<p><em>used to fetch all the orders off chain. Converts the linked lists to an array of <code>OrdersByPrice</code></em></p>
 <pre><code class="language-solidity">function getOrdersAndPrices(PriceBrackets storage self)
     internal
     view
     returns (OrdersByPrice[] memory correctOrdersByPrices_);
 </code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>self</code></td><td><code>PriceBrackets</code></td><td>the price bracket with the list of orders</td></tr>
+</tbody></table>
+</div>
+<p><strong>Returns</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>correctOrdersByPrices_</code></td><td><code>OrdersByPrice[]</code></td><td>an array with all the orders at the price bracket</td></tr>
+</tbody></table>
+</div>
 <h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
 <h3 id="pricesmallerthanpreverror"><a class="header" href="#pricesmallerthanpreverror">PriceSmallerThanPrevError</a></h3>
+<p>emitted when the hints are wrong and the current price is bigger than the previous hinted price</p>
 <pre><code class="language-solidity">error PriceSmallerThanPrevError();
 </code></pre>
 <h3 id="pricebiggerthannexterror"><a class="header" href="#pricebiggerthannexterror">PriceBiggerThanNextError</a></h3>
+<p>emitted when the hints are wrong and the current price is smaller than the next hinted price</p>
 <pre><code class="language-solidity">error PriceBiggerThanNextError();
 </code></pre>
 <h3 id="pricebracketdoesnotexisterror"><a class="header" href="#pricebracketdoesnotexisterror">PriceBracketDoesNotExistError</a></h3>
+<p>emitted when the price bracket does not exist</p>
 <pre><code class="language-solidity">error PriceBracketDoesNotExistError();
 </code></pre>
 <h2 id="structs"><a class="header" href="#structs">Structs</a></h2>
 <h3 id="ordersbyprice"><a class="header" href="#ordersbyprice">OrdersByPrice</a></h3>
+<p>OrdersByPrice is a struct that contains the price and an array of orders at that price</p>
+<p><em>useful to fetch off chain all orders at a given price</em></p>
 <pre><code class="language-solidity">struct OrdersByPrice {
     uint128 price;
     LibLinkedOrders.Order[] orders;
 }
 </code></pre>
 <h3 id="pricebracket"><a class="header" href="#pricebracket">PriceBracket</a></h3>
+<p>PriceBracket is a struct that contains the previous and next price brackets and a linked list of orders</p>
+<p><em>a linked list is used to allow insertion and removal of orders in constant time (given hints)</em></p>
 <pre><code class="language-solidity">struct PriceBracket {
     uint128 prev;
     uint128 next;
@@ -244,6 +393,8 @@
 }
 </code></pre>
 <h3 id="pricebrackets"><a class="header" href="#pricebrackets">PriceBrackets</a></h3>
+<p>PriceBrackets is a struct that contains the lowest and highest price and a mapping of price to price bracket</p>
+<p><em>contains the head (lowest price) and tail (highest price) of the linked list of price brackets</em></p>
 <pre><code class="language-solidity">struct PriceBrackets {
     uint128 lowestPrice;
     uint128 highestPrice;
