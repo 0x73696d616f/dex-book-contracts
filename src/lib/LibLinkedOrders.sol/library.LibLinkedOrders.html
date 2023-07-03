@@ -149,7 +149,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="liblinkedorders"><a class="header" href="#liblinkedorders">LibLinkedOrders</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/cb769735f3172eb8e6270c17d198bf7f4eeec7f0/src/lib/LibLinkedOrders.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/de5c9f5f6dcc64ca766a37fb15376277eb5d36b2/src/lib/LibLinkedOrders.sol">Git Source</a></p>
 <h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
 <h3 id="null"><a class="header" href="#null">NULL</a></h3>
 <p>NULL is a constant that represents an invalid order id</p>
@@ -210,7 +210,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 </div>
 <h3 id="getorders"><a class="header" href="#getorders">getOrders</a></h3>
 <p>returns the orders in a linked list of orders</p>
-<pre><code class="language-solidity">function getOrders(LinkedOrders storage self) internal view returns (LibLinkedOrders.Order[] memory orders_);
+<pre><code class="language-solidity">function getOrders(LinkedOrders storage self) internal view returns (ViewOrder[] memory orders_);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -229,6 +229,14 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
     address maker;
     uint48 prev;
     uint48 next;
+    uint256 amount;
+}
+</code></pre>
+<h3 id="vieworder"><a class="header" href="#vieworder">ViewOrder</a></h3>
+<p>ViewOrder is a struct that contains the id, maker, and amount of an order.</p>
+<pre><code class="language-solidity">struct ViewOrder {
+    uint48 id;
+    address maker;
     uint256 amount;
 }
 </code></pre>

@@ -163,7 +163,7 @@
 <li><a href="src/lib/LibPriceBrackets.sol/library.LibPriceBrackets.html">LibPriceBrackets</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="liblinkedorders"><a class="header" href="#liblinkedorders">LibLinkedOrders</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/cb769735f3172eb8e6270c17d198bf7f4eeec7f0/src/lib/LibLinkedOrders.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/de5c9f5f6dcc64ca766a37fb15376277eb5d36b2/src/lib/LibLinkedOrders.sol">Git Source</a></p>
 <h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
 <h3 id="null"><a class="header" href="#null">NULL</a></h3>
 <p>NULL is a constant that represents an invalid order id</p>
@@ -224,7 +224,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 </div>
 <h3 id="getorders"><a class="header" href="#getorders">getOrders</a></h3>
 <p>returns the orders in a linked list of orders</p>
-<pre><code class="language-solidity">function getOrders(LinkedOrders storage self) internal view returns (LibLinkedOrders.Order[] memory orders_);
+<pre><code class="language-solidity">function getOrders(LinkedOrders storage self) internal view returns (ViewOrder[] memory orders_);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -246,6 +246,14 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
     uint256 amount;
 }
 </code></pre>
+<h3 id="vieworder"><a class="header" href="#vieworder">ViewOrder</a></h3>
+<p>ViewOrder is a struct that contains the id, maker, and amount of an order.</p>
+<pre><code class="language-solidity">struct ViewOrder {
+    uint48 id;
+    address maker;
+    uint256 amount;
+}
+</code></pre>
 <h3 id="linkedorders"><a class="header" href="#linkedorders">LinkedOrders</a></h3>
 <p>LinkedOrders is a struct that contains the head, tail, and length of a linked list of orders.</p>
 <pre><code class="language-solidity">struct LinkedOrders {
@@ -256,7 +264,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="libpricebrackets"><a class="header" href="#libpricebrackets">LibPriceBrackets</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/cb769735f3172eb8e6270c17d198bf7f4eeec7f0/src/lib/LibPriceBrackets.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/de5c9f5f6dcc64ca766a37fb15376277eb5d36b2/src/lib/LibPriceBrackets.sol">Git Source</a></p>
 <h2 id="state-variables-1"><a class="header" href="#state-variables-1">State Variables</a></h2>
 <h3 id="price_precision"><a class="header" href="#price_precision">PRICE_PRECISION</a></h3>
 <p>price precision is required because solidity does not support decimal values</p>
@@ -418,7 +426,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 <pre><code class="language-solidity">function getOrdersAtPrice(PriceBrackets storage self, uint128 price_)
     internal
     view
-    returns (LibLinkedOrders.Order[] memory);
+    returns (LibLinkedOrders.ViewOrder[] memory);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -428,7 +436,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 </div>
 <p><strong>Returns</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>&lt;none&gt;</code></td><td><code>LibLinkedOrders.Order[]</code></td><td>orders_  an array with all the orders at the price bracket</td></tr>
+<tr><td><code>&lt;none&gt;</code></td><td><code>LibLinkedOrders.ViewOrder[]</code></td><td>orders_  an array with all the orders at the price bracket</td></tr>
 </tbody></table>
 </div>
 <h3 id="getorderatprice"><a class="header" href="#getorderatprice">getOrderAtPrice</a></h3>
@@ -487,7 +495,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 <p><em>useful to fetch off chain all orders at a given price</em></p>
 <pre><code class="language-solidity">struct OrdersByPrice {
     uint128 price;
-    LibLinkedOrders.Order[] orders;
+    LibLinkedOrders.ViewOrder[] orders;
 }
 </code></pre>
 <h3 id="pricebracket"><a class="header" href="#pricebracket">PriceBracket</a></h3>
@@ -515,7 +523,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 <li><a href="src/token/WETH.sol/contract.WETH.html">WETH</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="fauceterc20"><a class="header" href="#fauceterc20">FaucetERC20</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/cb769735f3172eb8e6270c17d198bf7f4eeec7f0/src/token/FaucetERC20.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/de5c9f5f6dcc64ca766a37fb15376277eb5d36b2/src/token/FaucetERC20.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC20</p>
 <h2 id="functions-2"><a class="header" href="#functions-2">Functions</a></h2>
@@ -526,7 +534,7 @@ ERC20</p>
 <pre><code class="language-solidity">function faucet() external;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="usdc"><a class="header" href="#usdc">USDC</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/cb769735f3172eb8e6270c17d198bf7f4eeec7f0/src/token/USDC.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/de5c9f5f6dcc64ca766a37fb15376277eb5d36b2/src/token/USDC.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/USDC.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-3"><a class="header" href="#functions-3">Functions</a></h2>
@@ -537,7 +545,7 @@ ERC20</p>
 <pre><code class="language-solidity">function decimals() public view virtual override returns (uint8);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="weth"><a class="header" href="#weth">WETH</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/cb769735f3172eb8e6270c17d198bf7f4eeec7f0/src/token/WETH.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/de5c9f5f6dcc64ca766a37fb15376277eb5d36b2/src/token/WETH.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/WETH.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-4"><a class="header" href="#functions-4">Functions</a></h2>
@@ -545,7 +553,7 @@ ERC20</p>
 <pre><code class="language-solidity">constructor() FaucetERC20(&quot;Wrapped Ether&quot;, &quot;WETH&quot;);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="dexbook"><a class="header" href="#dexbook">DexBook</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/cb769735f3172eb8e6270c17d198bf7f4eeec7f0/src/DexBook.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/de5c9f5f6dcc64ca766a37fb15376277eb5d36b2/src/DexBook.sol">Git Source</a></p>
 <h2 id="state-variables-2"><a class="header" href="#state-variables-2">State Variables</a></h2>
 <h3 id="price_precision-1"><a class="header" href="#price_precision-1">PRICE_PRECISION</a></h3>
 <p>price precision is required to represent prices below 0</p>
@@ -847,7 +855,7 @@ ERC20</p>
 </div>
 <h3 id="sellordersatprice"><a class="header" href="#sellordersatprice">sellOrdersAtPrice</a></h3>
 <p>returns the sell orders at a given price</p>
-<pre><code class="language-solidity">function sellOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_);
+<pre><code class="language-solidity">function sellOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.ViewOrder[] memory orders_);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -856,12 +864,12 @@ ERC20</p>
 </div>
 <p><strong>Returns</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>orders_</code></td><td><code>LibLinkedOrders.Order[]</code></td><td>ordered sell orders array at a given price</td></tr>
+<tr><td><code>orders_</code></td><td><code>LibLinkedOrders.ViewOrder[]</code></td><td>ordered sell orders array at a given price</td></tr>
 </tbody></table>
 </div>
 <h3 id="buyordersatprice"><a class="header" href="#buyordersatprice">buyOrdersAtPrice</a></h3>
 <p>returns the buy orders at a given price</p>
-<pre><code class="language-solidity">function buyOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_);
+<pre><code class="language-solidity">function buyOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.ViewOrder[] memory orders_);
 </code></pre>
 <p><strong>Parameters</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
@@ -870,7 +878,7 @@ ERC20</p>
 </div>
 <p><strong>Returns</strong></p>
 <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>orders_</code></td><td><code>LibLinkedOrders.Order[]</code></td><td>ordered buy orders array at a given price</td></tr>
+<tr><td><code>orders_</code></td><td><code>LibLinkedOrders.ViewOrder[]</code></td><td>ordered buy orders array at a given price</td></tr>
 </tbody></table>
 </div>
 <h3 id="sellorderatprice"><a class="header" href="#sellorderatprice">sellOrderAtPrice</a></h3>
@@ -997,11 +1005,11 @@ ERC20</p>
 </code></pre>
 <h3 id="buymarketorderfilled"><a class="header" href="#buymarketorderfilled">BuyMarketOrderFilled</a></h3>
 <p>emitted when a buy market order is filled</p>
-<pre><code class="language-solidity">event BuyMarketOrderFilled(uint256 indexed price, address indexed maker, uint256 amount);
+<pre><code class="language-solidity">event BuyMarketOrderFilled(uint256 timestamp, uint256 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h3 id="sellmarketorderfilled"><a class="header" href="#sellmarketorderfilled">SellMarketOrderFilled</a></h3>
 <p>emitted when a sell market order is filled</p>
-<pre><code class="language-solidity">event SellMarketOrderFilled(uint256 indexed price, address indexed maker, uint256 amount);
+<pre><code class="language-solidity">event SellMarketOrderFilled(uint256 timestamp, uint256 indexed price, address indexed maker, uint256 amount);
 </code></pre>
 <h2 id="errors-2"><a class="header" href="#errors-2">Errors</a></h2>
 <h3 id="sameamounterror"><a class="header" href="#sameamounterror">SameAmountError</a></h3>
