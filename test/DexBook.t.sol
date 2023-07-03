@@ -77,8 +77,6 @@ contract DexBookTest is Test {
         assertEq(ordersByPrice_[0].orders.length, 1);
         assertEq(ordersByPrice_[0].orders[0].maker, alice);
         assertEq(ordersByPrice_[0].orders[0].amount, usdcAmount_);
-        assertEq(ordersByPrice_[0].orders[0].next, 0);
-        assertEq(ordersByPrice_[0].orders[0].prev, 0);
 
         assertEq(ordersByPrice_[0].price, tokenAtoTokenBPrice_);
 
@@ -131,8 +129,6 @@ contract DexBookTest is Test {
         assertEq(ordersByPrice_[0].orders.length, 1);
         assertEq(ordersByPrice_[0].orders[0].maker, bob);
         assertEq(ordersByPrice_[0].orders[0].amount, ethAmount_);
-        assertEq(ordersByPrice_[0].orders[0].next, 0);
-        assertEq(ordersByPrice_[0].orders[0].prev, 0);
 
         assertEq(ordersByPrice_[0].price, tokenBtoTokenAPrice_);
 

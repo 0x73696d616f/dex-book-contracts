@@ -20,7 +20,7 @@ library LibPriceBrackets {
      */
     struct OrdersByPrice {
         uint128 price;
-        LibLinkedOrders.Order[] orders;
+        LibLinkedOrders.ViewOrder[] orders;
     }
 
     /**
@@ -290,7 +290,7 @@ library LibPriceBrackets {
     function getOrdersAtPrice(PriceBrackets storage self, uint128 price_)
         internal
         view
-        returns (LibLinkedOrders.Order[] memory)
+        returns (LibLinkedOrders.ViewOrder[] memory)
     {
         return self.priceBrackets[price_].linkedOrders.getOrders();
     }
@@ -327,7 +327,7 @@ library LibPriceBrackets {
 
         OrdersByPrice[] memory ordersByPrices_ = new OrdersByPrice[](5000);
         while (curr_ != 0) {
-            LibLinkedOrders.Order[] memory priceOrders_ = getOrdersAtPrice(self, curr_);
+            LibLinkedOrders.ViewOrder[] memory priceOrders_ = getOrdersAtPrice(self, curr_);
             ordersByPrices_[length_++] = OrdersByPrice(curr_, priceOrders_);
             curr_ = self.priceBrackets[curr_].next;
         }

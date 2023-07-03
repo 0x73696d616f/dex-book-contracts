@@ -116,7 +116,7 @@ contract DexBook {
      * @param maker is the address of the order maker
      * @param amount is the amount of tokenA to be sent to the maker
      */
-    event BuyMarketOrderFilled(uint256 indexed price, address indexed maker, uint256 amount);
+    event BuyMarketOrderFilled(uint256 timestamp, uint256 indexed price, address indexed maker, uint256 amount);
 
     /**
      * @notice emitted when a sell market order is filled
@@ -124,7 +124,7 @@ contract DexBook {
      * @param maker is the address of the order maker
      * @param amount is the amount of tokenB to be sent to the maker
      */
-    event SellMarketOrderFilled(uint256 indexed price, address indexed maker, uint256 amount);
+    event SellMarketOrderFilled(uint256 timestamp, uint256 indexed price, address indexed maker, uint256 amount);
 
     /// @notice emitted when modifying an order with stale new same price and amount
     error SameAmountError(uint256 amount);
@@ -188,12 +188,18 @@ contract DexBook {
         ERC20(_tokenB).transferFrom(msg.sender, address(this), tokenBamount_);
         ERC20(_tokenB).transferFrom(msg.sender, _feeRecipient, tokenBamount_ * _protocolFee / BASIS_POINT);
 
-        (uint256 tokenBAvailable_, uint256 tokenAamount_) =
+        (uint256 tokenBAvailable_, uint256 tokenAamountBDecimalsAndPrecision_) =
             _sellOrders.removeOrdersUntilTarget(tokenBamount_, _fulfillSellLimitOrder);
 
         if (tokenBAvailable_ != tokenBamount_) ERC20(_tokenB).transfer(msg.sender, tokenBamount_ - tokenBAvailable_);
-        ERC20(_tokenA).transfer(msg.sender, tokenBToTokenADecimals(tokenAamount_) / PRICE_PRECISION);
-        emit BuyMarketOrderFilled(tokenBAvailable_ * PRICE_PRECISION / tokenAamount_, msg.sender, tokenAamount_);
+        uint256 tokenAamount_ = tokenBToTokenADecimals(tokenAamountBDecimalsAndPrecision_) / PRICE_PRECISION;
+        ERC20(_tokenA).transfer(msg.sender, tokenAamount_);
+        emit BuyMarketOrderFilled(
+            block.timestamp,
+            tokenBAvailable_ * PRICE_PRECISION ** 2 / tokenAamountBDecimalsAndPrecision_,
+            msg.sender,
+            tokenAamount_
+        );
     }
 
     /**
@@ -204,12 +210,15 @@ contract DexBook {
         ERC20(_tokenA).transferFrom(msg.sender, address(this), tokenAamount_);
         ERC20(_tokenA).transferFrom(msg.sender, _feeRecipient, tokenAamount_ * _protocolFee / BASIS_POINT);
 
-        (uint256 tokenAAvailable_, uint256 tokenBAmount_) =
+        (uint256 tokenAAvailable_, uint256 tokenBamountADecimalsAndPrecision_) =
             _buyOrders.removeOrdersUntilTarget(tokenAamount_, _fulfillBuyLimitOrder);
 
         if (tokenAAvailable_ != tokenAamount_) ERC20(_tokenA).transfer(msg.sender, tokenAamount_ - tokenAAvailable_);
-        ERC20(_tokenB).transfer(msg.sender, tokenAToTokenBDecimals(tokenBAmount_) / PRICE_PRECISION);
-        emit SellMarketOrderFilled(tokenBAmount_ * PRICE_PRECISION / tokenAAvailable_, msg.sender, tokenBAmount_);
+        uint256 tokenBamount_ = tokenAToTokenBDecimals(tokenBamountADecimalsAndPrecision_) / PRICE_PRECISION;
+        ERC20(_tokenB).transfer(msg.sender, tokenBamount_);
+        emit SellMarketOrderFilled(
+            block.timestamp, tokenBamountADecimalsAndPrecision_ / tokenAAvailable_, msg.sender, tokenBamount_
+        );
     }
 
     /**
@@ -457,7 +466,7 @@ contract DexBook {
      * @param price_ tokenA/tokenB price, not considering decimals, with `PRICE_PRECISION`
      * @return orders_ ordered sell orders array at a given price
      */
-    function sellOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_) {
+    function sellOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.ViewOrder[] memory orders_) {
         return _sellOrders.getOrdersAtPrice(price_);
     }
 
@@ -466,7 +475,7 @@ contract DexBook {
      * @param price_ tokenA/tokenB price, not considering decimals, with `PRICE_PRECISION`
      * @return orders_ ordered buy orders array at a given price
      */
-    function buyOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.Order[] memory orders_) {
+    function buyOrdersAtPrice(uint128 price_) external view returns (LibLinkedOrders.ViewOrder[] memory orders_) {
         return _buyOrders.getOrdersAtPrice(price_);
     }
 

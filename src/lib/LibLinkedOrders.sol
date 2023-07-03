@@ -22,6 +22,18 @@ library LibLinkedOrders {
     }
 
     /**
+     * @notice ViewOrder is a struct that contains the id, maker, and amount of an order.
+     * @param id is the id of the order
+     * @param maker is the address of the order maker
+     * @param amount is the amount of token to be traded
+     */
+    struct ViewOrder {
+        uint48 id;
+        address maker;
+        uint256 amount;
+    }
+
+    /**
      * @notice LinkedOrders is a struct that contains the head, tail, and length of a linked list of orders.
      * @param orders is a mapping from orderId to Order
      * @param head is the head of the linked list of orders
@@ -153,21 +165,21 @@ library LibLinkedOrders {
      * @notice returns the orders in a linked list of orders
      * @param self is the linked list of orders
      */
-    function getOrders(LinkedOrders storage self) internal view returns (LibLinkedOrders.Order[] memory orders_) {
+    function getOrders(LinkedOrders storage self) internal view returns (ViewOrder[] memory orders_) {
         uint48 curr_ = self.head;
         uint256 i_;
-        if (curr_ == 0) return new LibLinkedOrders.Order[](0);
+        if (curr_ == 0) return new ViewOrder[](0);
 
-        orders_ = new LibLinkedOrders.Order[](self.length);
+        orders_ = new ViewOrder[](self.length);
         uint256 length_;
         while (curr_ != 0) {
             LibLinkedOrders.Order memory order_ = self.orders[curr_];
-            orders_[i_++] = order_;
+            orders_[i_++] = ViewOrder(curr_, order_.maker, order_.amount);
             curr_ = order_.next;
             length_++;
         }
 
-        LibLinkedOrders.Order[] memory correctOrders_ = new LibLinkedOrders.Order[](length_);
+        ViewOrder[] memory correctOrders_ = new ViewOrder[](length_);
         for (i_ = 0; i_ < length_; i_++) {
             correctOrders_[i_] = orders_[i_];
         }
