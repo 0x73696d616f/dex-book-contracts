@@ -247,7 +247,7 @@ contract DexBook {
 
     /**
      * @notice modifies a buy limit order
-     * @dev reverts if the new price is the same as the old one
+     * @dev reverts if the new price and amount are the same as the old ones
      * @param orderId_ id of the order to modify
      * @param oldPrice_ old tokenB/tokenA, not considering decimals, with `PRICE_PRECISION`
      * @param newPrice_ new tokenB/tokenA, not considering decimals, with `PRICE_PRECISION`
@@ -300,7 +300,7 @@ contract DexBook {
 
     /**
      * @notice modifies a sell limit order
-     * @dev reverts if the new price is the same as the old one
+     * @dev reverts if the new price and amount are the same as the old ones
      * @param orderId_ id of the order to modify
      * @param oldPrice_ old tokenA/tokenB, not considering decimals, with `PRICE_PRECISION`
      * @param newPrice_ new tokenA/tokenB, not considering decimals, with `PRICE_PRECISION`
