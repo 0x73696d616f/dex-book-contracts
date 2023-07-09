@@ -99,7 +99,9 @@ contract DexBook {
      * @param maker is the address of the order maker
      * @param amount is the amount of tokenA to be sent to the maker when the order is filled
      */
-    event BuyLimitOrderModified(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
+    event BuyLimitOrderModified(
+        uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 oldAmount, uint256 amount
+    );
 
     /**
      * @notice emitted when a sell limit order is modified
@@ -108,7 +110,9 @@ contract DexBook {
      * @param maker is the address of the order maker
      * @param amount is the amount of tokenB to be sent to the maker when the order is filled
      */
-    event SellLimitOrderModified(uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 amount);
+    event SellLimitOrderModified(
+        uint48 indexed orderId, uint128 indexed price, address indexed maker, uint256 oldAmount, uint256 amount
+    );
 
     /**
      * @notice emitted when a buy market order is filled
@@ -273,7 +277,7 @@ contract DexBook {
             newAmount_ < oldAmount_
                 ? ERC20(_tokenB).transfer(maker_, tokenAToTokenB(oldAmount_ - newAmount_, oldPrice_))
                 : ERC20(_tokenB).transferFrom(msg.sender, address(this), tokenAToTokenB(newAmount_ - oldAmount_, oldPrice_));
-            emit BuyLimitOrderModified(orderId_, oldPrice_, maker_, newAmount_);
+            emit BuyLimitOrderModified(orderId_, oldPrice_, maker_, oldAmount_, newAmount_);
             return orderId_;
         }
 
@@ -326,7 +330,7 @@ contract DexBook {
             newAmount_ < oldAmount_
                 ? ERC20(_tokenA).transfer(maker_, tokenBToTokenA(oldAmount_ - newAmount_, oldPrice_))
                 : ERC20(_tokenA).transferFrom(msg.sender, address(this), tokenBToTokenA(newAmount_ - oldAmount_, oldPrice_));
-            emit SellLimitOrderModified(orderId_, oldPrice_, maker_, newAmount_);
+            emit SellLimitOrderModified(orderId_, oldPrice_, maker_, oldAmount_, newAmount_);
             return orderId_;
         }
 

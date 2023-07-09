@@ -55,7 +55,7 @@ deploy-anvil :;
 
 # Deploy the contract to remote network and verify the code
 deploy-apothem :;
-	forge script script/01_Deploy.s.sol:Deploy --broadcast --rpc-url ${RPC_URL_APOTHEM} --private-key ${PRIVATE_KEY} --etherscan-api-key abc --verifier-url https://explorer.apothem.network/api --verify --delay 20 --retries 10 --legacy -vvvv 
+	forge script script/01_Deploy.s.sol:Deploy --broadcast --rpc-url ${RPC_URL_APOTHEM} --private-key ${PRIVATE_KEY} --etherscan-api-key abc --verifier-url https://explorer.apothem.network/api --verify --delay 20 --retries 10 --legacy -vv 
 
 run-script :;
 	@export FOUNDRY_PROFILE=deploy && \

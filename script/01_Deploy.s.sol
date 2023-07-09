@@ -5,71 +5,92 @@ import { Script } from "@forge-std/Script.sol";
 
 import { console } from "@forge-std/console.sol";
 
+import { ERC20 } from "@openzeppelin/token/ERC20/ERC20.sol";
+
 import { DexBook } from "src/DexBook.sol";
 
 import { USDC } from "src/token/USDC.sol";
 import { WETH } from "src/token/WETH.sol";
 
+import { WBTC } from "src/token/WBTC.sol";
+
+import { USDT } from "src/token/USDT.sol";
+
 contract Deploy is Script {
-    address public constant USDC_ADDRESS = 0xB7D27002Ccfe2d7D0056422Be463bD72B2C2eB23;
-
-    function setUp() public { }
-
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         //vm.startBroadcast();
 
-        (USDC usdc_, WETH weth_, DexBook dexBook_) = _deploy();
-        _insertOrders(usdc_, weth_, dexBook_);
+        address usdc_ = address(new USDC());
+        address weth_ = address(new WETH());
+        address wbtc_ = address(new WBTC());
+
+        uint128[] memory prices_ = _getPrices(1000, 800, 1500, 1700, 1300);
+
+        _deployAndInsertOrders(ERC20(usdc_), ERC20(weth_), prices_);
+
+        _deployAndInsertOrders(ERC20(weth_), ERC20(wbtc_), _getPrices(16, 17, 15, 14, 18));
+
+        prices_ = _getPrices(30_328, 30_100, 31_000, 29_000, 29_500);
+        _deployAndInsertOrders(ERC20(usdc_), ERC20(wbtc_), prices_);
 
         vm.stopBroadcast();
     }
 
-    function _insertOrders(USDC usdc_, WETH eth_, DexBook dexBook_) internal {
-        uint256 ethAmount_ = 1e18;
-        uint128 price_ = dexBook_.invertPrice(1000 * dexBook_.pricePrecision());
+    function _deployAndInsertOrders(ERC20 tokenB_, ERC20 tokenA_, uint128[] memory prices_) internal {
+        DexBook dexBook_ = new DexBook(address(tokenA_), address(tokenB_));
+
+        console.log(address(dexBook_), tokenA_.symbol(), tokenB_.symbol());
+
+        tokenA_.approve(address(dexBook_), type(uint256).max);
+        tokenB_.approve(address(dexBook_), type(uint256).max);
+
+        uint256 tokenADecimals_ = tokenA_.decimals();
+
+        uint256 ethAmount_ = 1 * 10 ** tokenADecimals_;
+        uint128 price_ = dexBook_.invertPrice(prices_[0] * dexBook_.pricePrecision());
         uint256 usdcAmount_ = dexBook_.tokenAToTokenB(ethAmount_, price_);
 
         uint128[] memory prevsNexts_ = new uint128[](1);
 
-        usdc_.approve(address(dexBook_), dexBook_.amountPlusFee(usdcAmount_));
         dexBook_.placeBuyLimitOrder(ethAmount_, price_, prevsNexts_, prevsNexts_);
 
-        usdc_.approve(address(dexBook_), dexBook_.amountPlusFee(usdcAmount_));
         dexBook_.placeBuyLimitOrder(ethAmount_, price_, prevsNexts_, prevsNexts_);
 
-        price_ = dexBook_.invertPrice(800 * dexBook_.pricePrecision());
+        price_ = dexBook_.invertPrice(prices_[1] * dexBook_.pricePrecision());
         usdcAmount_ = dexBook_.tokenAToTokenB(ethAmount_, price_);
 
-        usdc_.approve(address(dexBook_), dexBook_.amountPlusFee(usdcAmount_));
         dexBook_.placeBuyLimitOrder(ethAmount_, price_, prevsNexts_, prevsNexts_);
 
-        ethAmount_ = 3e18;
-        price_ = 1500 * dexBook_.pricePrecision();
+        ethAmount_ = 3 * 10 ** tokenADecimals_;
+        price_ = prices_[2] * dexBook_.pricePrecision();
         usdcAmount_ = dexBook_.tokenAToTokenB(ethAmount_, dexBook_.invertPrice(price_));
-        eth_.approve(address(dexBook_), dexBook_.amountPlusFee(ethAmount_));
         dexBook_.placeSellLimitOrder(usdcAmount_, price_, prevsNexts_, prevsNexts_);
 
-        ethAmount_ = 2e18;
-        price_ = 1700 * dexBook_.pricePrecision();
+        ethAmount_ = 2 * 10 ** tokenADecimals_;
+        price_ = prices_[3] * dexBook_.pricePrecision();
         usdcAmount_ = dexBook_.tokenAToTokenB(ethAmount_, dexBook_.invertPrice(price_));
-        eth_.approve(address(dexBook_), dexBook_.amountPlusFee(ethAmount_));
         dexBook_.placeSellLimitOrder(usdcAmount_, price_, prevsNexts_, prevsNexts_);
 
-        ethAmount_ = 5e18;
-        price_ = 1300 * dexBook_.pricePrecision();
+        ethAmount_ = 5 * 10 ** tokenADecimals_;
+        price_ = prices_[4] * dexBook_.pricePrecision();
         usdcAmount_ = dexBook_.tokenAToTokenB(ethAmount_, dexBook_.invertPrice(price_));
-        eth_.approve(address(dexBook_), dexBook_.amountPlusFee(ethAmount_));
         dexBook_.placeSellLimitOrder(usdcAmount_, price_, prevsNexts_, prevsNexts_);
+
+        dexBook_.placeSellMarketOrder(10 ** tokenADecimals_ / 10);
+        dexBook_.placeBuyMarketOrder(10 ** dexBook_.tokenBDecimals() / 10);
     }
 
-    function _deploy() internal returns (USDC usdc_, WETH weth_, DexBook dexBook_) {
-        // deploy test tokens
-        usdc_ = new USDC();
-        weth_ = new WETH();
-
-        // deploy DexBook
-
-        dexBook_ = new DexBook(address(weth_), address(usdc_));
+    function _getPrices(uint128 price1_, uint128 price2_, uint128 price3_, uint128 price4_, uint128 price5_)
+        internal
+        pure
+        returns (uint128[] memory prices_)
+    {
+        prices_ = new uint128[](5);
+        prices_[0] = price1_;
+        prices_[1] = price2_;
+        prices_[2] = price3_;
+        prices_[3] = price4_;
+        prices_[4] = price5_;
     }
 }
