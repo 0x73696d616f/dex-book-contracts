@@ -21,7 +21,7 @@ number_underscore                = "thousands"  # Style of underscores in number
 
 [doc]
 out    = "docs"             # An output path for generated documentation.
-title  = "Foundry Template" # Title for the generated documentation.
+title  = "DexBook" # Title for the generated documentation.
 book   = "./book.toml"      # Path to user provided book.toml.
 ignore = []                 # List of files to ignore when generating documentation.
 
