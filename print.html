@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Foundry Template</title>
+        <title>DexBook</title>
         <meta name="robots" content="noindex" />
 
 
@@ -90,11 +90,33 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
@@ -114,7 +136,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">Foundry Template</h1>
+                    <h1 class="menu-title">DexBook</h1>
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
@@ -157,13 +179,20 @@
 <li>fill <code>PRIVATE_KEY</code></li>
 <li>run <code>make deploy-apothem</code></li>
 </ul>
+<h1 id="smart-contract-addresses"><a class="header" href="#smart-contract-addresses">Smart Contract Addresses</a></h1>
+<h2 id="wbtcusdc---0x78a82ace5c7133918ca7be3db3eab3a1046232ac"><a class="header" href="#wbtcusdc---0x78a82ace5c7133918ca7be3db3eab3a1046232ac">WBTC/USDC - 0x78a82ACE5c7133918ca7Be3DB3EAb3a1046232AC</a></h2>
+<h2 id="wethusdc---0x8734c402782382e6ec48638fc64a11c4dccddce1"><a class="header" href="#wethusdc---0x8734c402782382e6ec48638fc64a11c4dccddce1">WETH/USDC - 0x8734c402782382E6eC48638Fc64A11C4DCcdDce1</a></h2>
+<h2 id="wbtcweth---0xe002bc2eab8de575a372d13ed5abaab206abb0ba"><a class="header" href="#wbtcweth---0xe002bc2eab8de575a372d13ed5abaab206abb0ba">WBTC/WETH - 0xE002bc2Eab8dE575a372D13eD5ABAAb206ABb0ba</a></h2>
+<h2 id="wbtc---0x11b33c8bf6b3147ea0e913db15b82c125eaca7bf"><a class="header" href="#wbtc---0x11b33c8bf6b3147ea0e913db15b82c125eaca7bf">WBTC - 0x11b33c8bf6b3147ea0e913dB15b82c125eAcA7Bf</a></h2>
+<h2 id="usdc---0xf83234cc66da5502bfec9a7f6b8807b3a171e4db"><a class="header" href="#usdc---0xf83234cc66da5502bfec9a7f6b8807b3a171e4db">USDC - 0xf83234CC66Da5502bFEC9A7f6b8807b3A171e4db</a></h2>
+<h2 id="weth---0x17ff834dafd183f06d68a2ea01cfaad9092ed779"><a class="header" href="#weth---0x17ff834dafd183f06d68a2ea01cfaad9092ed779">WETH - 0x17ff834DaFD183f06D68a2ea01cFAad9092ED779</a></h2>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="contents"><a class="header" href="#contents">Contents</a></h1>
 <ul>
 <li><a href="src/lib/LibLinkedOrders.sol/library.LibLinkedOrders.html">LibLinkedOrders</a></li>
 <li><a href="src/lib/LibPriceBrackets.sol/library.LibPriceBrackets.html">LibPriceBrackets</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="liblinkedorders"><a class="header" href="#liblinkedorders">LibLinkedOrders</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/lib/LibLinkedOrders.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/lib/LibLinkedOrders.sol">Git Source</a></p>
 <h2 id="state-variables"><a class="header" href="#state-variables">State Variables</a></h2>
 <h3 id="null"><a class="header" href="#null">NULL</a></h3>
 <p>NULL is a constant that represents an invalid order id</p>
@@ -264,7 +293,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="libpricebrackets"><a class="header" href="#libpricebrackets">LibPriceBrackets</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/lib/LibPriceBrackets.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/lib/LibPriceBrackets.sol">Git Source</a></p>
 <h2 id="state-variables-1"><a class="header" href="#state-variables-1">State Variables</a></h2>
 <h3 id="price_precision"><a class="header" href="#price_precision">PRICE_PRECISION</a></h3>
 <p>price precision is required because solidity does not support decimal values</p>
@@ -525,7 +554,7 @@ after removing the last order, returns. Else, does a partial fulfillment of the 
 <li><a href="src/token/WETH.sol/contract.WETH.html">WETH</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="fauceterc20"><a class="header" href="#fauceterc20">FaucetERC20</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/token/FaucetERC20.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/token/FaucetERC20.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 ERC20</p>
 <h2 id="functions-2"><a class="header" href="#functions-2">Functions</a></h2>
@@ -536,7 +565,7 @@ ERC20</p>
 <pre><code class="language-solidity">function faucet() external;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="usdc"><a class="header" href="#usdc">USDC</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/token/USDC.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/token/USDC.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/USDC.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-3"><a class="header" href="#functions-3">Functions</a></h2>
@@ -547,7 +576,7 @@ ERC20</p>
 <pre><code class="language-solidity">function decimals() public view virtual override returns (uint8);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="usdt"><a class="header" href="#usdt">USDT</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/token/USDT.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/token/USDT.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/USDT.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-4"><a class="header" href="#functions-4">Functions</a></h2>
@@ -558,7 +587,7 @@ ERC20</p>
 <pre><code class="language-solidity">function decimals() public view virtual override returns (uint8);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="wbtc"><a class="header" href="#wbtc">WBTC</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/token/WBTC.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/token/WBTC.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/WBTC.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-5"><a class="header" href="#functions-5">Functions</a></h2>
@@ -566,7 +595,7 @@ ERC20</p>
 <pre><code class="language-solidity">constructor() FaucetERC20(&quot;Wrapped BTC&quot;, &quot;WBTC&quot;);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="weth"><a class="header" href="#weth">WETH</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/token/WETH.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/token/WETH.sol">Git Source</a></p>
 <p><strong>Inherits:</strong>
 <a href="src/token/WETH.sol//src/token/FaucetERC20.sol/contract.FaucetERC20.html">FaucetERC20</a></p>
 <h2 id="functions-6"><a class="header" href="#functions-6">Functions</a></h2>
@@ -574,7 +603,7 @@ ERC20</p>
 <pre><code class="language-solidity">constructor() FaucetERC20(&quot;Wrapped Ether&quot;, &quot;WETH&quot;);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="dexbook"><a class="header" href="#dexbook">DexBook</a></h1>
-<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/f223726cc263896dd95bc822c2638af79263aa09/src/DexBook.sol">Git Source</a></p>
+<p><a href="https://github.com/0x73696d616f/dex-book-contracts/blob/b2333b3ef6ba4a7fdc53c90597d614463c28376f/src/DexBook.sol">Git Source</a></p>
 <h2 id="state-variables-2"><a class="header" href="#state-variables-2">State Variables</a></h2>
 <h3 id="price_precision-1"><a class="header" href="#price_precision-1">PRICE_PRECISION</a></h3>
 <p>price precision is required to represent prices below 0</p>

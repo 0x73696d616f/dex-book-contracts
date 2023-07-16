@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Home - Foundry Template</title>
+        <title>Home - DexBook</title>
 
 
         <!-- Custom HTML head -->
@@ -89,11 +89,33 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
@@ -113,7 +135,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">Foundry Template</h1>
+                    <h1 class="menu-title">DexBook</h1>
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
@@ -156,6 +178,13 @@
 <li>fill <code>PRIVATE_KEY</code></li>
 <li>run <code>make deploy-apothem</code></li>
 </ul>
+<h1 id="smart-contract-addresses"><a class="header" href="#smart-contract-addresses">Smart Contract Addresses</a></h1>
+<h2 id="wbtcusdc---0x78a82ace5c7133918ca7be3db3eab3a1046232ac"><a class="header" href="#wbtcusdc---0x78a82ace5c7133918ca7be3db3eab3a1046232ac">WBTC/USDC - 0x78a82ACE5c7133918ca7Be3DB3EAb3a1046232AC</a></h2>
+<h2 id="wethusdc---0x8734c402782382e6ec48638fc64a11c4dccddce1"><a class="header" href="#wethusdc---0x8734c402782382e6ec48638fc64a11c4dccddce1">WETH/USDC - 0x8734c402782382E6eC48638Fc64A11C4DCcdDce1</a></h2>
+<h2 id="wbtcweth---0xe002bc2eab8de575a372d13ed5abaab206abb0ba"><a class="header" href="#wbtcweth---0xe002bc2eab8de575a372d13ed5abaab206abb0ba">WBTC/WETH - 0xE002bc2Eab8dE575a372D13eD5ABAAb206ABb0ba</a></h2>
+<h2 id="wbtc---0x11b33c8bf6b3147ea0e913db15b82c125eaca7bf"><a class="header" href="#wbtc---0x11b33c8bf6b3147ea0e913db15b82c125eaca7bf">WBTC - 0x11b33c8bf6b3147ea0e913dB15b82c125eAcA7Bf</a></h2>
+<h2 id="usdc---0xf83234cc66da5502bfec9a7f6b8807b3a171e4db"><a class="header" href="#usdc---0xf83234cc66da5502bfec9a7f6b8807b3a171e4db">USDC - 0xf83234CC66Da5502bFEC9A7f6b8807b3A171e4db</a></h2>
+<h2 id="weth---0x17ff834dafd183f06d68a2ea01cfaad9092ed779"><a class="header" href="#weth---0x17ff834dafd183f06d68a2ea01cfaad9092ed779">WETH - 0x17ff834DaFD183f06D68a2ea01cFAad9092ED779</a></h2>
 
                     </main>
 
